@@ -1,0 +1,60 @@
+[
+  {
+    "time": 0.0,
+    "type": "start",
+    "desc": "開始"
+  },
+  {
+    "time": 2.2,
+    "type": "tap"
+  },
+  {
+    "time": 3.5,
+    "type": "tap"
+  },
+  {
+    "time": 4.7,
+    "type": "tap"
+  },
+  {
+    "time": 6.0,
+    "type": "tap"
+  },
+  {
+    "time": 7.3,
+    "type": "tap"
+  },
+  {
+    "time": 8.5,
+    "type": "tap"
+  },
+  {
+    "time": 9.7,
+    "type": "tap"
+  },
+  {
+    "time": 11.0,
+    "type": "tap"
+  },
+  {
+    "time": 12.2,
+    "type": "tap"
+  },
+  {
+    "time": 13.4,
+    "type": "tap"
+  },
+  {
+    "time": 14.7,
+    "type": "tap"
+  },
+  {
+    "time": 16.0,
+    "type": "tap"
+  },
+  {
+    "time": 18.0,
+    "type": "checkpoint",
+    "desc": "段落結束"
+  }
+]
