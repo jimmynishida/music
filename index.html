@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>時光迴廊 - 懷舊音樂之旅 v3.0</title>
+    <title>時光迴廊 - 懷舊音樂之旅 v3.1</title>
     <style>
         /* --- 全局與佈局 --- */
         :root {
@@ -129,7 +129,7 @@
         }
 
         /* --- 指揮家 遊戲樣式 --- */
-        #conductor-game-area { width: 100%; height: 100%; cursor: crosshair; }
+        #conductor-game-area { width: 100%; height: 100%; cursor: crosshair; pointer-events: auto; }
         #conductor-game-area .note {
             position: absolute; width: 50px; height: 50px; border-radius: 50%;
             transform: translate(-50%, -50%) scale(0); transition: transform 0.3s ease-out;
@@ -161,6 +161,7 @@
         #turntable-game-area .record-label { width: 35%; height: 35%; background-color: #d2b48c; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 11px; color: #5d4037; font-weight: bold; z-index: 1; border: 2px solid #a1887f; padding: 5px; box-sizing: border-box; }
         #turntable-game-area .judgment-zone { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; border: 2px solid rgba(255, 223, 186, 0.7); border-radius: 50%; z-index: 10; }
         #turntable-game-area .tonearm { position: absolute; width: 150px; height: 8px; background: linear-gradient(to right, #ccc, #eee); border-radius: 4px; top: calc(50% - 4px); left: 50%; transform-origin: calc(150px - 20px) 50%; z-index: 20; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); cursor: grab; }
+        #turntable-game-area .stylus { position: absolute; width: 12px; height: 12px; background-color: #333; border: 2px solid #fff; border-radius: 50%; top: -4px; left: -4px; }
         #turntable-game-area .note { position: absolute; width: 40px; height: 10px; background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), transparent); border-radius: 5px; transform-origin: calc(var(--record-size) / 2 - 25px) center; top: 25px; left: calc(50% - 20px); z-index: 5; }
         #turntable-game-area .note.strong { background: linear-gradient(90deg, transparent, rgba(255, 100, 100, 1), transparent); box-shadow: 0 0 10px #ff4500; }
 
@@ -198,8 +199,8 @@
         </div>
         <div id="turntable-game-area" class="game-ui-container">
              <div class="game-background"></div>
-             <div class="record"><div class="record-label"><div class="song-title"></div><div class="song-artist"></div></div></div>
-             <div class="tonearm"><div id="stylus"></div></div>
+             <div class="record"><div class="record-label"></div></div>
+             <div class="tonearm"><div class="stylus"></div></div>
              <div class="judgment-zone"></div>
         </div>
         <div id="timebeat-game-area" class="game-ui-container">
@@ -273,7 +274,7 @@
         <button class="retro-button" id="back-from-leaderboard-btn">返回</button>
     </div>
     
-    <div id="poster-preview-container">
+    <div id="poster-preview-container" onclick="this.style.display='none'">
         <canvas id="poster-canvas"></canvas>
     </div>
 
@@ -281,52 +282,22 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.0 [2025-07-22]
+    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.1
     // =================================================================================
 
-    // --- 1. 全局 DOM 獲取與狀態管理 ---
+    // --- 1. 全局狀態與 DOM ---
     const allScreens = document.querySelectorAll('.screen');
     const gameUIs = document.querySelectorAll('.game-ui-container');
     const gameStatsEl = document.querySelector('.game-stats');
     const gameAudio = document.getElementById('game-audio');
 
     const Game = {
-        state: { /* ... state object ... */ },
-        init() { /* ... init logic ... */ },
-        showScreen(screenId) { /* ... screen logic ... */ },
-        startGame(songId) { /* ... start logic ... */ },
-        endGame() { /* ... end logic ... */ },
-        showFirstPlayHint() { /* ... hint logic ... */ },
-        generatePoster() { /* ... poster logic ... */ },
-    };
-    
-    // --- 2. 歌曲數據 (整合所有遊戲) ---
-    const SongData = { /* ... song data object ... */ };
-    const SongOrder = { /* ... song order object ... */ };
-    
-    // --- 3. 排行榜 & 歌曲選擇 ---
-    const Leaderboard = { /* ... leaderboard logic ... */ };
-    const SongSelection = { /* ... song selection logic ... */ };
-
-    // --- 4. 遊戲邏輯模組 ---
-    const TimeBeat = { /* ... timebeat logic ... */ };
-    const Conductor = { /* ... conductor logic ... */ };
-    const Turntable = { /* ... turntable logic ... */ };
-    
-    // --- 5. 教學模組 ---
-    const Tutorial = { /* ... tutorial logic ... */ };
-
-    // =======================================================
-    //  模組實現 (Implementation of Modules)
-    // =======================================================
-    
-    // --- Game Module Implementation ---
-    Object.assign(Game, {
         state: {
             activeGame: null, currentSongId: null, score: 0, combo: 0, maxCombo: 0,
             hits: { perfect: 0, good: 0, miss: 0 }, totalNotes: 0, accuracy: 0, rating: 'C',
             isPlaying: false, isFirstPlay: {}, startTime: null, animationFrameId: null,
         },
+        // --- 遊戲初始化與畫面管理 ---
         init() {
             const firstPlayData = localStorage.getItem('isFirstPlay');
             this.state.isFirstPlay = firstPlayData ? JSON.parse(firstPlayData) : { conductor: true, turntable: true, timebeat: true };
@@ -350,6 +321,7 @@
             allScreens.forEach(s => s.classList.remove('active'));
             document.getElementById(screenId)?.classList.add('active');
         },
+        // --- 遊戲核心流程 ---
         startGame(songId) {
             if (this.state.isFirstPlay[this.state.activeGame]) {
                 this.showFirstPlayHint();
@@ -362,7 +334,9 @@
 
             allScreens.forEach(s => s.classList.remove('active'));
             gameUIs.forEach(ui => ui.classList.remove('active'));
-            document.getElementById(`${this.state.activeGame}-game-area`).classList.add('active');
+            const activeGameArea = document.getElementById(`${this.state.activeGame}-game-area`);
+            activeGameArea.classList.add('active');
+            
             gameStatsEl.style.display = 'flex';
             document.getElementById('score').textContent = 0;
             document.getElementById('combo').textContent = 0;
@@ -372,10 +346,13 @@
             gameAudio.src = songData.audioSrc;
             gameAudio.currentTime = 0;
 
+            const backgroundEl = activeGameArea.querySelector('.game-background');
+            if(backgroundEl) backgroundEl.style.backgroundImage = `url('${songData.backgroundSrc}')`;
+            
             const gameModule = window[this.state.activeGame.charAt(0).toUpperCase() + this.state.activeGame.slice(1)];
             if (gameModule) gameModule.start();
         },
-        endGame() { /* ... implementation from previous version ... */
+        endGame() {
             if (!this.state.isPlaying) return;
             this.state.isPlaying = false;
             if(this.state.animationFrameId) cancelAnimationFrame(this.state.animationFrameId);
@@ -385,10 +362,10 @@
 
             const perfectScore = this.state.hits.perfect * 2;
             const goodScore = this.state.hits.good;
-            const maxPossibleScore = this.state.totalNotes * 2;
+            const maxPossibleScore = (this.state.totalNotes > 0) ? ((this.state.totalNotes - this.state.hits.miss) * 2) : 0;
             this.state.accuracy = maxPossibleScore > 0 ? ((perfectScore + goodScore) / maxPossibleScore) * 100 : 0;
             
-            if (this.state.accuracy >= 100) this.state.rating = 'S+';
+            if (this.state.accuracy >= 100 && this.state.hits.miss === 0) this.state.rating = 'S+';
             else if (this.state.accuracy > 95) this.state.rating = 'S';
             else if (this.state.accuracy > 90) this.state.rating = 'A';
             else if (this.state.accuracy > 80) this.state.rating = 'B';
@@ -404,94 +381,150 @@
             this.showScreen('end-screen');
             Leaderboard.checkNewScore(this.state.score);
         },
-        showFirstPlayHint() { /* ... implementation from previous version ... */ },
-        generatePoster() { /* ... implementation from previous version ... */ },
-    });
-    // Fill in missing methods
-    Game.showFirstPlayHint = function() {
-        const hintText = {
-            timebeat: '跟隨節拍，點擊下落的音符！',
-            conductor: '跟隨光流滑動，在音符處點擊！',
-            turntable: '拖動唱臂對準旋轉的節拍線！'
-        }[this.state.activeGame];
-        const hintEl = document.createElement('div');
-        hintEl.className = 'first-play-hint';
-        hintEl.textContent = hintText;
-        hintEl.style.top = '30%'; hintEl.style.left = '50%'; hintEl.style.transform = 'translateX(-50%)';
-        document.body.appendChild(hintEl);
-        setTimeout(() => hintEl.remove(), 3000);
-    };
-    Game.generatePoster = function() {
-        const posterCanvas = document.getElementById('poster-canvas');
-        const pCtx = posterCanvas.getContext('2d');
-        const width = 400; const height = 600;
-        posterCanvas.width = width; posterCanvas.height = height;
-        const song = SongData[this.state.activeGame][this.state.currentSongId];
-        const bgImg = new Image();
-        bgImg.crossOrigin = "Anonymous";
-        bgImg.src = song.backgroundSrc;
-        bgImg.onload = () => {
-            pCtx.drawImage(bgImg, 0, 0, width, height);
-            pCtx.fillStyle = 'rgba(0, 0, 0, 0.6)'; pCtx.fillRect(0, 0, width, height);
-            pCtx.fillStyle = 'gold'; pCtx.beginPath(); pCtx.moveTo(width/2, 80);
-            for (let i = 0; i < 5; i++) { pCtx.lineTo(width/2 + 50 * Math.cos(Math.PI * (0.9 + i * 0.8)), 80 + 50 * Math.sin(Math.PI * (0.9 + i * 0.8))); }
-            pCtx.closePath(); pCtx.fill();
-            pCtx.fillStyle = 'white'; pCtx.font = 'bold 30px sans-serif'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
-            pCtx.fillText(this.state.rating, width/2, 85);
-            pCtx.fillStyle = 'white'; pCtx.font = 'bold 28px sans-serif';
-            pCtx.fillText(song.title, width/2, 180);
-            pCtx.font = '20px sans-serif';
-            pCtx.fillText(`分數: ${this.state.score}`, width/2, 240);
-            pCtx.fillText(`最大連擊: ${this.state.maxCombo}`, width/2, 280);
-            pCtx.fillText(`準確率: ${this.state.accuracy.toFixed(2)}%`, width/2, 320);
-            pCtx.font = 'italic bold 32px sans-serif'; pCtx.fillStyle = 'cyan';
-            pCtx.fillText('時光迴廊', width/2, 450);
-            pCtx.font = '14px sans-serif'; pCtx.fillStyle = 'lightgray';
-            pCtx.fillText('長按圖片即可儲存分享', width/2, 550);
-            document.getElementById('poster-preview-container').style.display = 'flex';
-        };
-        bgImg.onerror = () => {
-            pCtx.fillStyle = '#333'; pCtx.fillRect(0, 0, width, height);
-            pCtx.fillStyle = 'white'; pCtx.font = '24px sans-serif'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
-            pCtx.fillText('背景圖片加載失敗', width/2, height/2);
-            document.getElementById('poster-preview-container').style.display = 'flex';
+        showFirstPlayHint() {
+            const hintText = {
+                timebeat: '跟隨節拍，點擊下落的音符！',
+                conductor: '跟隨光流滑動，在音符處點擊！',
+                turntable: '拖動唱臂對準旋轉的節拍線！'
+            }[this.state.activeGame];
+            const hintEl = document.createElement('div');
+            hintEl.className = 'first-play-hint';
+            hintEl.textContent = hintText;
+            hintEl.style.top = '30%'; hintEl.style.left = '50%'; hintEl.style.transform = 'translateX(-50%)';
+            document.body.appendChild(hintEl);
+            setTimeout(() => hintEl.remove(), 3000);
+        },
+        generatePoster() {
+             const posterCanvas = document.getElementById('poster-canvas');
+            const pCtx = posterCanvas.getContext('2d');
+            const width = 400; const height = 600;
+            posterCanvas.width = width; posterCanvas.height = height;
+            const song = SongData[this.state.activeGame][this.state.currentSongId];
+            const bgImg = new Image();
+            bgImg.crossOrigin = "Anonymous";
+            bgImg.src = song.backgroundSrc;
+            bgImg.onload = () => {
+                pCtx.drawImage(bgImg, 0, 0, width, height);
+                pCtx.fillStyle = 'rgba(0, 0, 0, 0.6)'; pCtx.fillRect(0, 0, width, height);
+                pCtx.fillStyle = 'gold'; pCtx.beginPath(); pCtx.moveTo(width/2, 80);
+                for (let i = 0; i < 5; i++) { pCtx.lineTo(width/2 + 50 * Math.cos(Math.PI * (0.9 + i * 0.8)), 80 + 50 * Math.sin(Math.PI * (0.9 + i * 0.8))); }
+                pCtx.closePath(); pCtx.fill();
+                pCtx.fillStyle = 'white'; pCtx.font = 'bold 30px sans-serif'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
+                pCtx.fillText(this.state.rating, width/2, 85);
+                pCtx.fillStyle = 'white'; pCtx.font = 'bold 28px sans-serif';
+                pCtx.fillText(song.title, width/2, 180);
+                pCtx.font = '20px sans-serif';
+                pCtx.fillText(`分數: ${this.state.score}`, width/2, 240);
+                pCtx.fillText(`最大連擊: ${this.state.maxCombo}`, width/2, 280);
+                pCtx.fillText(`準確率: ${this.state.accuracy.toFixed(2)}%`, width/2, 320);
+                pCtx.font = 'italic bold 32px sans-serif'; pCtx.fillStyle = 'cyan';
+                pCtx.fillText('時光迴廊', width/2, 450);
+                pCtx.font = '14px sans-serif'; pCtx.fillStyle = 'lightgray';
+                pCtx.fillText('長按圖片即可儲存分享', width/2, 550);
+                document.getElementById('poster-preview-container').style.display = 'flex';
+            };
+            bgImg.onerror = () => {
+                pCtx.fillStyle = '#333'; pCtx.fillRect(0, 0, width, height);
+                pCtx.fillStyle = 'white'; pCtx.font = '24px sans-serif'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
+                pCtx.fillText('背景圖片加載失敗', width/2, height/2);
+                document.getElementById('poster-preview-container').style.display = 'flex';
+            }
+        },
+        util: {
+            playAudio() {
+                const playPromise = gameAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        gameAudio.pause();
+                        setTimeout(() => {
+                            gameAudio.currentTime = 0;
+                            gameAudio.play();
+                            Game.state.startTime = performance.now();
+                            const gameModule = window[Game.state.activeGame.charAt(0).toUpperCase() + Game.state.activeGame.slice(1)];
+                            gameModule.gameLoop(Game.state.startTime);
+                        }, 1500);
+                    }).catch(error => {
+                        alert("無法自動播放音訊。請與頁面交互後再試。");
+                    });
+                }
+            },
+            showFeedback(type, text) {
+                const feedbackEl = document.createElement('div');
+                feedbackEl.className = `feedback ${type}`;
+                feedbackEl.textContent = text;
+                document.body.appendChild(feedbackEl);
+                setTimeout(() => feedbackEl.remove(), 1000);
+            },
+            updateUI() {
+                document.getElementById('score').textContent = Game.state.score;
+                document.getElementById('combo').textContent = Game.state.combo;
+            }
         }
-        document.getElementById('poster-preview-container').onclick = (e) => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
     };
-
-    // --- SongData & Leaderboard & SongSelection Implementation (from previous version) ---
-    Object.assign(SongData, {
+    
+    // --- 2. 歌曲數據 ---
+    const SongData = {
         timebeat: {
-            tongnian: { title: '童年', artist: '羅大佑', unlockScore: 0, duration: 19300, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/童年.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?childhood,play', notes: JSON.parse('[{"time":1500,"type":"tap"},{"time":3000,"type":"tap"},{"time":4400,"type":"strong"},{"time":6000,"type":"tap"},{"time":7200,"type":"tap"},{"time":9000,"type":"strong"},{"time":10300,"type":"tap"},{"time":11700,"type":"tap"},{"time":13000,"type":"tap"},{"time":14500,"type":"strong"},{"time":16000,"type":"tap"},{"time":17300,"type":"tap"}]')},
-            tianmimi: { title: '甜蜜蜜', artist: '鄧麗君', unlockScore: 6000, duration: 21000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/甜蜜蜜.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?sweet,love', notes: JSON.parse('[{"time":2000,"type":"tap"},{"time":3200,"type":"tap"},{"time":4500,"type":"strong"},{"time":7000,"type":"tap"},{"time":8200,"type":"tap"},{"time":9400,"type":"tap"},{"time":10600,"type":"strong"},{"time":11800,"type":"tap"},{"time":14000,"type":"tap"},{"time":15200,"type":"tap"},{"time":16500,"type":"strong"},{"time":17800,"type":"tap"},{"time":19000,"type":"tap"}]')}
+            tongnian: { title: '童年', artist: '羅大佑', unlockScore: 0, duration: 19300, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/童年.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?childhood,play', notes: JSON.parse('[{"time":1.5,"type":"tap"},{"time":3,"type":"tap"},{"time":4.4,"type":"strong"},{"time":6,"type":"tap"},{"time":7.2,"type":"tap"},{"time":9,"type":"strong"},{"time":10.3,"type":"tap"},{"time":11.7,"type":"tap"},{"time":13,"type":"tap"},{"time":14.5,"type":"strong"},{"time":16,"type":"tap"},{"time":17.3,"type":"tap"}]').map(n => ({...n, time: n.time * 1000}))},
+            tianmimi: { title: '甜蜜蜜', artist: '鄧麗君', unlockScore: 6000, duration: 21000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/甜蜜蜜.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?sweet,love', notes: JSON.parse('[{"time":2,"type":"tap"},{"time":3.2,"type":"tap"},{"time":4.5,"type":"strong"},{"time":7,"type":"tap"},{"time":8.2,"type":"tap"},{"time":9.4,"type":"tap"},{"time":10.6,"type":"strong"},{"time":11.8,"type":"tap"},{"time":14,"type":"tap"},{"time":15.2,"type":"tap"},{"time":16.5,"type":"strong"},{"time":17.8,"type":"tap"},{"time":19,"type":"tap"}]').map(n => ({...n, time: n.time * 1000}))}
         },
         conductor: {
-            yueliang: { title: '月亮代表我的心', artist: '鄧麗君', unlockScore: 0, duration: 17000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/月亮代表我的心.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?moon,night', notes: JSON.parse('[{"time":1000,"type":"tap"},{"time":2400,"type":"tap"},{"time":3600,"type":"strong"},{"time":5000,"type":"tap"},{"time":6200,"type":"tap"},{"time":7500,"type":"strong"},{"time":8800,"type":"tap"},{"time":10000,"type":"tap"},{"time":11200,"type":"tap"},{"time":12600,"type":"strong"},{"time":13800,"type":"tap"},{"time":15000,"type":"tap"}]')},
-            henai: { title: '很愛很愛你', artist: '劉若英', unlockScore: 6000, duration: 17000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/很愛很愛你.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?love,letter', notes: JSON.parse('[{"time":1800,"type":"tap"},{"time":3000,"type":"tap"},{"time":4200,"type":"tap"},{"time":5400,"type":"strong"},{"time":6600,"type":"tap"},{"time":7800,"type":"tap"},{"time":9000,"type":"tap"},{"time":10200,"type":"strong"},{"time":11400,"type":"tap"},{"time":12600,"type":"tap"},{"time":13800,"type":"tap"},{"time":15000,"type":"strong"}]')}
+            yueliang: { title: '月亮代表我的心', artist: '鄧麗君', unlockScore: 0, duration: 17000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/月亮代表我的心.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?moon,night', notes: JSON.parse('[{"time":1,"type":"tap"},{"time":2.4,"type":"tap"},{"time":3.6,"type":"strong"},{"time":5,"type":"tap"},{"time":6.2,"type":"tap"},{"time":7.5,"type":"strong"},{"time":8.8,"type":"tap"},{"time":10,"type":"tap"},{"time":11.2,"type":"tap"},{"time":12.6,"type":"strong"},{"time":13.8,"type":"tap"},{"time":15,"type":"tap"}]').map(n => ({...n, time: n.time * 1000}))},
+            henai: { title: '很愛很愛你', artist: '劉若英', unlockScore: 6000, duration: 17000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/很愛很愛你.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?love,letter', notes: JSON.parse('[{"time":1.8,"type":"tap"},{"time":3,"type":"tap"},{"time":4.2,"type":"tap"},{"time":5.4,"type":"strong"},{"time":6.6,"type":"tap"},{"time":7.8,"type":"tap"},{"time":9,"type":"tap"},{"time":10.2,"type":"strong"},{"time":11.4,"type":"tap"},{"time":12.6,"type":"tap"},{"time":13.8,"type":"tap"},{"time":15,"type":"strong"}]').map(n => ({...n, time: n.time * 1000}))}
         },
         turntable: {
-             naner: { title: '男兒當自強', artist: '林子祥', unlockScore: 0, duration: 19100, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/男兒當自強.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?kungfu,china', notes: JSON.parse('[{"time":2500,"type":"strong"},{"time":3800,"type":"tap"},{"time":5200,"type":"tap"},{"time":6600,"type":"strong"},{"time":8000,"type":"tap"},{"time":9200,"type":"tap"},{"time":10700,"type":"strong"},{"time":12000,"type":"tap"},{"time":13200,"type":"tap"},{"time":14400,"type":"strong"},{"time":15800,"type":"tap"},{"time":17100,"type":"tap"}]')},
-             xiaosa: { title: '瀟灑走一回', artist: '葉倩文', unlockScore: 7000, duration: 18000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/瀟灑走一回.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?journey,wind', notes: JSON.parse('[{"time":2200,"type":"tap"},{"time":3500,"type":"tap"},{"time":4700,"type":"strong"},{"time":6000,"type":"tap"},{"time":7300,"type":"tap"},{"time":8500,"type":"strong"},{"time":9700,"type":"tap"},{"time":11000,"type":"tap"},{"time":12200,"type":"strong"},{"time":13400,"type":"tap"},{"time":14700,"type":"tap"},{"time":16000,"type":"strong"}]')}
+             naner: { title: '男兒當自強', artist: '林子祥', unlockScore: 0, duration: 19100, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/男兒當自強.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?kungfu,china', notes: JSON.parse('[{"time":2.5,"type":"strong"},{"time":3.8,"type":"tap"},{"time":5.2,"type":"tap"},{"time":6.6,"type":"strong"},{"time":8,"type":"tap"},{"time":9.2,"type":"tap"},{"time":10.7,"type":"strong"},{"time":12,"type":"tap"},{"time":13.2,"type":"tap"},{"time":14.4,"type":"strong"},{"time":15.8,"type":"tap"},{"time":17.1,"type":"tap"}]').map(n => ({...n, time: n.time * 1000}))},
+             xiaosa: { title: '瀟灑走一回', artist: '葉倩文', unlockScore: 7000, duration: 18000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/瀟灑走一回.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?journey,wind', notes: JSON.parse('[{"time":2.2,"type":"tap"},{"time":3.5,"type":"tap"},{"time":4.7,"type":"strong"},{"time":6,"type":"tap"},{"time":7.3,"type":"tap"},{"time":8.5,"type":"strong"},{"time":9.7,"type":"tap"},{"time":11,"type":"tap"},{"time":12.2,"type":"strong"},{"time":13.4,"type":"tap"},{"time":14.7,"type":"tap"},{"time":16,"type":"strong"}]').map(n => ({...n, time: n.time * 1000}))}
         }
-    });
-    Object.assign(SongOrder, {
+    };
+    const SongOrder = {
         timebeat: ['tongnian', 'tianmimi'],
         conductor: ['yueliang', 'henai'],
         turntable: ['naner', 'xiaosa'],
-    });
-    Object.assign(Leaderboard, { /* ... implementation from previous version ... */ });
-    Object.assign(SongSelection, { /* ... implementation from previous version ... */ });
+    };
     
-    // --- Game Logic Implementation ---
-    Object.assign(TimeBeat, { /* ... a placeholder, as it's already implemented in the original file ... */ });
-    Object.assign(Conductor, { /* ... a placeholder for the new implementation ... */ });
-    Object.assign(Turntable, { /* ... a placeholder for the new implementation ... */ });
+    // --- 3. 排行榜 & 歌曲選擇 ---
+    const Leaderboard = {
+        playerProgress: { conductor: {}, turntable: {}, timebeat: {} },
+        leaderboards: { conductor: {}, turntable: {}, timebeat: {} },
+        init() {
+            const savedProgress = localStorage.getItem('playerProgress_v3');
+            if (savedProgress) this.playerProgress = JSON.parse(savedProgress); else this.save();
+            const savedBoards = localStorage.getItem('leaderboards_v3');
+            if (savedBoards) this.leaderboards = JSON.parse(savedBoards); else this.save();
 
-    // --- Tutorial Module Implementation ---
-    Object.assign(Tutorial, { /* ... implementation from previous version ... */ });
-    
-    // --- Final Initialization ---
-    // Game.init(); // This will be called at the end
-    </script>
-</body>
-</html>
+            document.getElementById('submit-score-btn').addEventListener('click', () => this.submitScore());
+            document.getElementById('back-from-leaderboard-btn').addEventListener('click', () => Game.showScreen('end-screen'));
+        },
+        getScores(game, song) {
+            if (!this.leaderboards[game]) this.leaderboards[game] = {};
+            if (!this.leaderboards[game][song]) this.leaderboards[game][song] = [];
+            return this.leaderboards[game][song];
+        },
+        addScore(game, song, name, score) {
+            const scores = this.getScores(game, song);
+            scores.push({ name, score });
+            scores.sort((a, b) => b.score - a.score);
+            this.leaderboards[game][song] = scores.slice(0, 5);
+            this.save();
+        },
+        checkNewScore(score) {
+            const game = Game.state.activeGame;
+            const song = Game.state.currentSongId;
+            const scores = this.getScores(game, song);
+            if (scores.length < 5 || score > scores[scores.length - 1].score) {
+                document.getElementById('name-prompt').style.display = 'block';
+            } else {
+                document.getElementById('name-prompt').style.display = 'none';
+            }
+            if (!this.playerProgress[game]) this.playerProgress[game] = {};
+            const prevHighScore = this.playerProgress[game][song] || 0;
+            if (score > prevHighScore) {
+                this.playerProgress[game][song] = score;
+                this.save();
+            }
+        },
+        submitScore() {
+            const nameInput = document.getElementById('player-name-input');
+            const name = nameInput.value.toUpperCase() || 'AAA';
+            this.addScore(Game.state.activeGame, Game.
