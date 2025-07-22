@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>時光迴廊 - 懷舊音樂之旅</title>
     <style>
-        /* CSS樣式與之前相同，此處為節省篇幅省略... */
         /* --- 全局與佈局 --- */
         :root {
             --record-size: 300px;
@@ -13,20 +12,18 @@
             --theme-color-2: #483d8b; /* 懷舊的暗藍色 */
             --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
         }
-        body {
-            margin: 0;
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: var(--font-family);
             overflow: hidden;
             touch-action: none;
             background: linear-gradient(135deg, #2a2a3e, #4a3a4a);
             color: white;
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10+ */
             user-select: none;
+            -webkit-user-select: none;
         }
         .screen {
-            position: absolute;
-            top: 0; left: 0;
+            position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             display: none; /* 默認全部隱藏 */
             flex-direction: column;
@@ -35,71 +32,56 @@
             background-color: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
             text-align: center;
-            box-sizing: border-box;
-            padding: 20px;
+            transition: opacity 0.5s ease;
         }
-        .screen.active {
-            display: flex;
-        }
+        .screen.active { display: flex; }
+        .screen.hidden { opacity: 0; pointer-events: none; }
+
         .retro-button {
-            padding: 12px 28px;
-            font-size: 18px;
-            color: white;
+            padding: 12px 28px; font-size: 18px; color: white;
             background: linear-gradient(145deg, var(--theme-color-1), #e06a00);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 8px;
+            cursor: pointer; margin: 10px;
             box-shadow: 0 4px 0 #a04a00, 2px 2px 8px rgba(0,0,0,0.5);
             transition: all 0.1s ease-out;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
         }
-        .retro-button:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #a04a00;
-        }
+        .retro-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a04a00; }
         h1 { font-size: 42px; text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
         p { opacity: 0.9; }
 
         /* --- 主選單 (時光迴廊) --- */
         #main-menu-screen {
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/800x600/?city,night,80s') no-repeat center center/cover;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/800x600/?80s,retro,city') no-repeat center center/cover;
         }
         #main-menu-screen h1 { font-size: 48px; }
-        .game-choice-container { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 30px; }
+        .game-choice-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; margin-top: 30px; }
         .game-choice-card {
-            width: 140px;
-            height: 180px;
-            margin: 15px;
-            border: 3px solid rgba(255, 255, 255, 0.7);
-            border-radius: 12px;
+            width: 150px; height: 200px; margin: 15px;
+            border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 12px;
             background: rgba(0,0,0,0.4);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; transition: all 0.3s ease;
         }
         .game-choice-card:hover { transform: scale(1.05); border-color: var(--theme-color-1); }
-        .game-choice-card .icon { font-size: 50px; }
-        .game-choice-card .title { font-size: 22px; margin-top: 15px; font-weight: bold; }
+        .game-choice-card .icon { font-size: 60px; }
+        .game-choice-card .title { font-size: 24px; margin-top: 15px; font-weight: bold; }
 
         /* --- 玩法示範 --- */
-        #tutorial-screen .tutorial-container { position: relative; width: 300px; height: 400px; border: 2px dashed #fff; border-radius: 10px; background: rgba(0,0,0,0.2); }
-        #tutorial-screen p { margin: 15px 0 25px 0; font-size: 18px; }
-        .tutorial-item { position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #tutorial-screen .tutorial-container { position: relative; width: 300px; height: 400px; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 20px; box-sizing: border-box; }
+        #tutorial-screen h2 { margin-bottom: 20px; }
+        .tutorial-item { position: absolute; width: 90%; height: 80%; top: 15%; left: 5%; opacity: 0; transition: opacity 0.8s ease-in-out; text-align: center; }
         .tutorial-item.active { opacity: 1; }
         .demo-finger {
-            width: 40px; height: 40px; background-color: rgba(255, 255, 100, 0.8); border-radius: 50%;
-            position: absolute; box-shadow: 0 0 15px white; z-index: 100;
+            width: 40px; height: 40px; background-color: rgba(255,255,255,0.8); border-radius: 50%;
+            position: absolute; box-shadow: 0 0 15px white; transform: translate(-50%, -50%);
+            z-index: 10;
         }
-        .demo-note { width: 50px; height: 50px; border-radius: 50%; background: #ffd700; display:flex; justify-content:center; align-items:center; }
-        .demo-note-strong { width: 65px; height: 65px; background: #ff4500; }
-        .demo-judgment-line { position: absolute; bottom: 50px; width: 80%; height: 3px; background: var(--theme-color-1); border-radius: 3px; }
-        @keyframes demo-tap { 0% {transform: scale(1);} 20% {transform: scale(0.8);} 40% {transform: scale(1);} 100% {transform: scale(1);} }
-        @keyframes demo-move { from { top: 20%; } to { top: 80%; } }
-        @keyframes demo-drag { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+        .demo-note {
+            position: absolute; background-color: #ffd700; border-radius: 50%; box-shadow: 0 0 15px #ffd700;
+            transform: translate(-50%, -50%);
+        }
+        /* 具體示範動畫由 JS 控制 */
 
         /* --- 歌曲選擇 --- */
         #song-selection-screen { backdrop-filter: blur(10px); }
@@ -122,57 +104,46 @@
         }
         .game-ui-container.active { display: block; }
         .game-stats {
-            position: absolute; top: 20px; left: 20px; right: 20px;
+            position: absolute; top: 20px; left: 20px; right: 20px; z-index: 50;
             display: flex; justify-content: space-between; font-size: 24px;
-            color: white; text-shadow: 1px 1px 3px black; pointer-events: auto;
-        }
-        .feedback-container {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 101;
+            color: white; text-shadow: 2px 2px 4px black; pointer-events: auto;
         }
         .feedback {
-            font-size: 48px; font-weight: bold;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 48px; font-weight: bold; pointer-events: none; z-index: 101;
             opacity: 0; animation: feedback-anim 1s forwards;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
         }
         .feedback.perfect { color: #ffd700; }
+        .feedback.good { color: #87ceeb; }
         .feedback.miss { color: #ff69b4; }
         .first-play-hint {
             position: absolute; background-color: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 8px;
             color: white; font-size: 16px; pointer-events: none; z-index: 200;
-            text-shadow: 1px 1px 2px black;
-            animation: pulse 2s infinite;
+            opacity: 0; animation: feedback-anim 3s forwards;
         }
 
-        /* --- 指揮家 遊戲樣式 --- */
-        #conductor-game-area { width: 100vw; height: 100vh; cursor: crosshair; pointer-events: auto; }
-        #conductor-game-area .note { position: absolute; width: 50px; height: 50px; border-radius: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.3s ease-out; z-index: 10; background-color: rgba(255, 255, 255, 0.3); border: 2px solid rgba(255, 255, 255, 0.7); display: flex; justify-content: center; align-items: center; }
-        #conductor-game-area .note.active { transform: translate(-50%, -50%) scale(1); background-color: rgba(255, 215, 0, 0.5); border-color: #ffd700; animation: pulse 1.5s infinite; }
-        #conductor-game-area .note.strong.active { transform: translate(-50%, -50%) scale(1.3); background-color: rgba(255, 100, 100, 0.7); border-color: #ff4500; }
-        #conductor-game-area .note.hold.active::after { content: ''; position: absolute; width: 100%; height: 100%; border: 4px solid #1e90ff; border-radius: 50%; animation: shrink var(--duration) linear forwards; }
-        #conductor-game-area .trail { position: absolute; width: 20px; height: 20px; background: radial-gradient(circle, rgba(255, 223, 186, 0.8) 0%, rgba(255, 223, 186, 0) 70%); border-radius: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; animation: fade-out 0.5s forwards; }
-
-        /* --- 時光唱盤 遊戲樣式 --- */
-        #turntable-game-area { width: 100%; height: 100%; display:flex; justify-content:center; align-items:center; }
-        #turntable-container { position: relative; width: var(--record-size); height: var(--record-size); }
-        #turntable-container #record { width: 100%; height: 100%; background: radial-gradient(circle, #555 10%, #444 11%, #333 12%, #333 100%); border-radius: 50%; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(0,0,0,0.5); animation: spin 10s linear infinite; animation-play-state: paused; }
-        #turntable-container #record::before { content: ''; position: absolute; width: 90%; height: 90%; border-radius: 50%; background-image: repeating-radial-gradient(circle, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 4px); }
-        #turntable-container #record-label { width: 35%; height: 35%; background-color: #d2b48c; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 11px; color: #5d4037; font-weight: bold; z-index: 1; border: 2px solid #a1887f; padding: 5px; box-sizing: border-box; }
-        #turntable-container #judgment-zone { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; border: 2px solid rgba(255, 223, 186, 0.7); border-radius: 50%; z-index: 10; background: rgba(255,223,186,0.2); }
-        #turntable-container .note { position: absolute; width: 40px; height: 10px; background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), transparent); border-radius: 5px; transform-origin: 50% calc(var(--record-size) / 2); top: 50%; left: 50%; margin-top:-5px; margin-left:-20px; z-index: 5; }
-        #turntable-container .note.strong { background: linear-gradient(90deg, transparent, rgba(255, 100, 100, 1), transparent); box-shadow: 0 0 10px #ff4500; height: 14px; margin-top:-7px; }
+        /* --- 指揮家 & 時光節拍 遊戲通用樣式 --- */
+        .game-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            transition: filter 0.5s ease-out; z-index: -1;
+        }
 
         /* --- 時光節拍 遊戲樣式 --- */
-        #timebeat-game-area { width: 100%; height: 100%; pointer-events: auto; }
-        #timebeat-game-area #judgment-line-container { position:absolute; bottom: 15%; left:0; width:100%; display:flex; justify-content:center; }
-        #timebeat-game-area #judgment-line { width: 90%; max-width: 400px; height: 5px; background: linear-gradient(90deg, transparent, var(--theme-color-1), transparent); box-shadow: 0 0 15px var(--theme-color-1); border-radius: 5px; }
-        #timebeat-game-area .note { position: absolute; top: -50px; width: 80px; height: 30px; background: #ffd700; border-radius: 15px; transform: translateX(-50%); transition: top 1.5s linear; }
-        #timebeat-game-area .note.strong { background: #ff4500; box-shadow: 0 0 10px #ff4500; height: 40px; }
-        
+        #timebeat-game-area canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
+        #timebeat-game-area .combo-display {
+             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+             font-size: 4rem; font-weight: bold; color: rgba(255, 255, 255, 0.5); opacity: 0;
+             transition: opacity 0.2s, transform 0.2s;
+        }
+        #timebeat-game-area .combo-display.show { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+
         /* --- 結束與排行榜畫面 --- */
         #end-screen-content { padding: 20px; }
         #leaderboard-screen input {
-            width: 100px; font-size: 24px; text-align: center; background: #333; color: white; border: 2px solid #ccc;
-            border-radius: 5px; margin: 10px 0; text-transform: uppercase;
+            width: 100px; font-size: 24px; text-align: center; background: #333; color: white;
+            border: 2px solid #ccc; border-radius: 5px; margin: 10px 0; text-transform: uppercase;
         }
         #leaderboard-list { list-style: none; padding: 0; width: 80%; max-width: 350px; margin-top: 20px; }
         #leaderboard-list li {
@@ -180,42 +151,51 @@
             background: rgba(255,255,255,0.1); border-radius: 5px;
         }
         #leaderboard-list li:first-child { background: var(--theme-color-1); font-weight: bold; }
+        #poster-button { margin-top: 15px; }
+        #poster-preview-container {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 100;
+        }
+        #poster-canvas { border: 2px solid white; border-radius: 10px; }
 
         /* --- 動畫 --- */
-        @keyframes pulse { 0% { box-shadow: 0 0 10px #ffd700; } 50% { box-shadow: 0 0 25px #ffd700; } 100% { box-shadow: 0 0 10px #ffd700; } }
-        @keyframes shrink { from { transform: scale(1.5); opacity: 1; } to { transform: scale(1); opacity: 0; } }
-        @keyframes fade-out { to { transform: translate(-50%, -50%) scale(0); opacity: 0; } }
-        @keyframes feedback-anim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); } }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes feedback-anim {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+        /* ... 其他動畫 ... */
     </style>
 </head>
 <body>
 
     <div id="main-container">
-        <div id="conductor-game-area" class="game-ui-container"></div>
+        <div id="conductor-game-area" class="game-ui-container">
+             <div class="game-background"></div>
+        </div>
         <div id="turntable-game-area" class="game-ui-container">
-            <div id="turntable-container">
-                <div id="judgment-zone"></div>
-                <div id="record"><div id="record-label"><div class="song-title"></div><div class="song-artist"></div></div></div>
-            </div>
+             <div class="game-background"></div>
         </div>
         <div id="timebeat-game-area" class="game-ui-container">
-            <div id="judgment-line-container">
-                 <div id="judgment-line"></div>
-            </div>
+            <div class="game-background"></div>
+            <div class="combo-display"></div>
+            <canvas id="timebeat-canvas"></canvas>
         </div>
         
         <div class="game-stats" style="display: none;">
-            <div>得分: <span id="score">0</span></div>
+            <div>分數: <span id="score">0</span></div>
             <div>連擊: <span id="combo">0</span></div>
         </div>
-        <div class="feedback-container"></div>
     </div>
 
     <div id="main-menu-screen" class="screen active">
         <h1>時光迴廊</h1>
         <p>選擇你的懷舊音樂之旅</p>
         <div class="game-choice-container">
+            <div class="game-choice-card" data-gametype="timebeat">
+                <div class="icon">🎶</div>
+                <div class="title">時光節拍</div>
+            </div>
             <div class="game-choice-card" data-gametype="conductor">
                 <div class="icon">🎼</div>
                 <div class="title">指揮家</div>
@@ -224,20 +204,15 @@
                 <div class="icon">💿</div>
                 <div class="title">時光唱盤</div>
             </div>
-            <div class="game-choice-card" data-gametype="timebeat">
-                <div class="icon">🎹</div>
-                <div class="title">時光節拍</div>
-            </div>
         </div>
-        <button class="retro-button" id="show-tutorial-btn" style="margin-top: 30px;">觀看玩法</button>
+        <button class="retro-button" id="show-tutorial-btn">玩法示範</button>
     </div>
 
     <div id="tutorial-screen" class="screen">
-        <h1 id="tutorial-title">玩法示範</h1>
-        <p id="tutorial-desc">點擊屏幕繼續</p>
         <div class="tutorial-container">
-            </div>
-        <button class="retro-button" id="skip-tutorial-btn">略過示範</button>
+             <h2>玩法示範</h2>
+             </div>
+        <button class="retro-button" id="skip-tutorial-btn">返回主選單</button>
     </div>
 
     <div id="song-selection-screen" class="screen">
@@ -251,7 +226,9 @@
             <h1 id="end-title">演奏結束</h1>
             <p style="font-size: 24px;">最終得分: <span id="final-score">0</span></p>
             <p>最高連擊: <span id="max-combo">0</span></p>
-            <p>評級: <span id="rating-badge"></span></p>
+            <p>準確率: <span id="accuracy">0%</span></p>
+            <p style="font-size: 32px; font-weight: bold; color: gold;">評級: <span id="rating-badge"></span></p>
+            <button id="poster-button" class="retro-button">生成勳章海報</button>
             <button id="view-leaderboard-btn" class="retro-button">查看排行榜</button>
             <button id="retry-button" class="retro-button">再次嘗試</button>
             <button id="back-to-song-menu-btn" class="retro-button">返回選曲</button>
@@ -261,285 +238,262 @@
     <div id="leaderboard-screen" class="screen">
         <h1 id="leaderboard-title">歌曲排行榜</h1>
         <div id="name-prompt" style="display: none;">
-            <h3>恭喜創下新紀錄！請留下你的大名：</h3>
+            <h3>恭喜創下新紀錄！請留下你的大名 (3個字母)：</h3>
             <input type="text" id="player-name-input" maxlength="3" value="AAA">
             <button id="submit-score-btn" class="retro-button">提交分數</button>
         </div>
         <ol id="leaderboard-list"></ol>
         <button class="retro-button" id="back-from-leaderboard-btn">返回</button>
     </div>
+    
+    <div id="poster-preview-container">
+        <canvas id="poster-canvas"></canvas>
+    </div>
+
+    <audio id="game-audio" preload="auto"></audio>
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - 統一程式碼框架 (動態載入版)
+    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v2.1
     // =================================================================================
 
-    // --- 全局 DOM 獲取 ---
+    // --- 1. 全局 DOM 獲取與狀態管理 ---
     const allScreens = document.querySelectorAll('.screen');
     const gameUIs = document.querySelectorAll('.game-ui-container');
     const gameStatsEl = document.querySelector('.game-stats');
-    const feedbackContainer = document.querySelector('.feedback-container');
+    const gameAudio = document.getElementById('game-audio');
 
-    // --- 音訊管理器 ---
-    const AudioManager = {
-        sounds: {},
-        bgm: null,
-        preload() {
-            this.sounds.hit = new Audio('/audio/hit.wav');
-            this.sounds.miss = new Audio('/audio/miss.wav');
-            
-            // 處理瀏覽器音訊自動播放政策
-            const initAudio = () => {
-                Object.values(this.sounds).forEach(sound => {
-                    sound.play().catch(() => {});
-                    sound.pause();
-                });
-                window.removeEventListener('click', initAudio, true);
-                window.removeEventListener('touchstart', initAudio, true);
-            };
-            window.addEventListener('click', initAudio, true);
-            window.addEventListener('touchstart', initAudio, true);
-        },
-        play(soundName) {
-            const sound = this.sounds[soundName];
-            if (sound) {
-                sound.currentTime = 0;
-                sound.play().catch(e => console.error("音效播放失敗:", e));
-            }
-        },
-        playBGM(audioFile) {
-            this.stopBGM();
-            const bgmPath = `/audio/${audioFile}`;
-            this.bgm = new Audio(bgmPath);
-            this.bgm.loop = true;
-            this.bgm.play().catch(e => console.error(`BGM ${bgmPath} 播放失敗:`, e));
-        },
-        stopBGM() {
-            if (this.bgm) {
-                this.bgm.pause();
-                this.bgm = null;
-            }
-        }
-    };
-    
-    // --- 遊戲狀態管理器 ---
     const Game = {
-        state: { /* ... */ },
-        init() { /* ... */ },
-        showScreen(screenId) { /* ... */ },
-        async startGame(songId) { // *** 改為異步函數 ***
-            this.state.currentSongId = songId;
-            const gameType = this.state.activeGame;
-            const songData = SongData[gameType][songId];
-            
-            // 顯示讀取中... (可選)
-            this.showScreen('loading-screen'); // 假設有一個讀取畫面
-
-            try {
-                // 從 /beatmaps/ 動態載入譜面
-                const response = await fetch(`/beatmaps/${songData.beatmapFile}`);
-                if (!response.ok) throw new Error(`找不到譜面檔案: ${songData.beatmapFile}`);
-                const notes = await response.json();
-
-                // 譜面載入成功後，才正式開始遊戲
-                this.state.score = 0;
-                this.state.combo = 0;
-                this.state.maxCombo = 0;
-                this.state.isPlaying = true;
-
-                allScreens.forEach(s => s.classList.remove('active'));
-                gameUIs.forEach(ui => ui.classList.remove('active'));
-                document.getElementById(`${gameType}-game-area`).classList.add('active');
-                gameStatsEl.style.display = 'flex';
-                this.updateUI();
-
-                // 播放BGM
-                AudioManager.playBGM(songData.audioFile);
-
-                // 啟動對應的遊戲邏輯，並傳入譜面
-                const GameImplementations = { conductor: Conductor, turntable: Turntable, timebeat: TimeBeat };
-                GameImplementations[gameType].start(notes, songData);
-                
-                // 首次遊玩提示
-                if (this.state.isFirstPlay[gameType]) {
-                    this.showFirstPlayHint();
-                    this.state.isFirstPlay[gameType] = false;
-                    localStorage.setItem('isFirstPlay', JSON.stringify(this.state.isFirstPlay));
-                }
-
-            } catch (error) {
-                console.error("無法開始遊戲:", error);
-                alert(`錯誤：無法載入歌曲資源。\n${error.message}`);
-                this.showScreen('song-selection-screen'); // 返回選歌畫面
-            }
-        },
-        endGame() { /* ... */ },
-        updateUI() { /* ... */ },
-        showFeedback(type, text) { /* ... */ },
-        showFirstPlayHint() { /* ... */ },
-    };
-    // 為了節省篇幅，部分未變動的函數內容用 /* ... */ 表示
-    Object.assign(Game, {
         state: {
             activeGame: null,
             currentSongId: null,
             score: 0,
             combo: 0,
             maxCombo: 0,
+            hits: { perfect: 0, good: 0, miss: 0 },
+            totalNotes: 0,
+            accuracy: 0,
+            rating: 'C',
             isPlaying: false,
             isFirstPlay: { conductor: true, turntable: true, timebeat: true },
-            gameLoopId: null
+            startTime: null,
+            animationFrameId: null,
         },
         init() {
+            // 讀取首次遊玩狀態
+            const firstPlayData = localStorage.getItem('isFirstPlay');
+            if (firstPlayData) {
+                this.state.isFirstPlay = JSON.parse(firstPlayData);
+            }
+
+            // 主選單按鈕
             document.querySelectorAll('.game-choice-card').forEach(card => {
                 card.addEventListener('click', () => {
-                    this.state.activeGame = card.dataset.gametype;
+                    const gameType = card.dataset.gametype;
+                    this.state.activeGame = gameType;
                     this.showScreen('song-selection-screen');
                     SongSelection.render();
                 });
             });
-            document.getElementById('show-tutorial-btn').addEventListener('click', () => Tutorial.start());
             document.getElementById('back-to-main-menu-btn').addEventListener('click', () => this.showScreen('main-menu-screen'));
+            document.getElementById('show-tutorial-btn').addEventListener('click', () => {
+                this.showScreen('tutorial-screen');
+                Tutorial.start();
+            });
+            document.getElementById('skip-tutorial-btn').addEventListener('click', () => {
+                Tutorial.stop();
+                this.showScreen('main-menu-screen');
+            });
+            
+            // 結束畫面按鈕
             document.getElementById('retry-button').addEventListener('click', () => this.startGame(this.state.currentSongId));
             document.getElementById('back-to-song-menu-btn').addEventListener('click', () => {
                 this.showScreen('song-selection-screen');
                 SongSelection.render();
             });
             document.getElementById('view-leaderboard-btn').addEventListener('click', () => Leaderboard.show());
+            document.getElementById('poster-button').addEventListener('click', () => this.generatePoster());
 
-            const savedFirstPlay = localStorage.getItem('isFirstPlay');
-            if (savedFirstPlay) { this.state.isFirstPlay = JSON.parse(savedFirstPlay); }
+            Leaderboard.init();
             this.showScreen('main-menu-screen');
         },
         showScreen(screenId) {
             allScreens.forEach(s => s.classList.remove('active'));
-            const targetScreen = document.getElementById(screenId);
-            if (targetScreen) targetScreen.classList.add('active');
+            const activeScreen = document.getElementById(screenId);
+            if (activeScreen) activeScreen.classList.add('active');
+        },
+        startGame(songId) {
+            // 檢查是否是第一次玩
+            if (this.state.isFirstPlay[this.state.activeGame]) {
+                // 顯示首次遊玩提示
+                this.showFirstPlayHint();
+                this.state.isFirstPlay[this.state.activeGame] = false;
+                localStorage.setItem('isFirstPlay', JSON.stringify(this.state.isFirstPlay));
+            }
+
+            // 重置狀態
+            this.state.currentSongId = songId;
+            this.state.score = 0;
+            this.state.combo = 0;
+            this.state.maxCombo = 0;
+            this.state.hits = { perfect: 0, good: 0, miss: 0 };
+            this.state.isPlaying = true;
+            this.state.startTime = null;
+            if(this.state.animationFrameId) cancelAnimationFrame(this.state.animationFrameId);
+
+            // 準備UI
+            allScreens.forEach(s => s.classList.remove('active'));
+            gameUIs.forEach(ui => ui.classList.remove('active'));
+            document.getElementById(`${this.state.activeGame}-game-area`).classList.add('active');
+            gameStatsEl.style.display = 'flex';
+            document.getElementById('score').textContent = 0;
+            document.getElementById('combo').textContent = 0;
+
+            const songData = SongData[this.state.activeGame][songId];
+            gameAudio.src = songData.audioSrc;
+            gameAudio.currentTime = 0;
+
+            // 根據遊戲類型啟動對應模組
+            let gameModule;
+            if (this.state.activeGame === 'timebeat') gameModule = TimeBeat;
+            else if (this.state.activeGame === 'conductor') gameModule = Conductor;
+            else if (this.state.activeGame === 'turntable') gameModule = Turntable;
+
+            if (gameModule) {
+                 gameModule.start();
+            }
         },
         endGame() {
             if (!this.state.isPlaying) return;
-            AudioManager.stopBGM();
             this.state.isPlaying = false;
-            if (this.state.gameLoopId) cancelAnimationFrame(this.state.gameLoopId);
+            if(this.state.animationFrameId) cancelAnimationFrame(this.state.animationFrameId);
+            this.state.animationFrameId = null;
+            gameAudio.pause();
             gameStatsEl.style.display = 'none';
 
-            const songData = SongData[this.state.activeGame][this.state.currentSongId];
-            const maxPossibleScore = (songData.noteCount || 1) * 350; // noteCount 應在載入譜面時計算
-            const scoreRatio = maxPossibleScore > 0 ? this.state.score / maxPossibleScore : 0;
-            let rating = 'C';
-            if (scoreRatio >= 0.9) rating = 'S';
-            else if (scoreRatio >= 0.8) rating = 'A';
-            else if (scoreRatio >= 0.6) rating = 'B';
+            // 計算最終成績
+            const totalHits = this.state.hits.perfect + this.state.hits.good;
+            this.state.accuracy = this.state.totalNotes > 0 ? (totalHits / this.state.totalNotes) * 100 : 0;
+            if (this.state.accuracy >= 100) this.state.rating = 'S+';
+            else if (this.state.accuracy > 95) this.state.rating = 'S';
+            else if (this.state.accuracy > 90) this.state.rating = 'A';
+            else if (this.state.accuracy > 80) this.state.rating = 'B';
+            else this.state.rating = 'C';
             
-            document.getElementById('end-title').textContent = `《${songData.title}》`;
+            // 顯示結果畫面
+            const songData = SongData[this.state.activeGame][this.state.currentSongId];
+            document.getElementById('end-title').textContent = songData.title;
             document.getElementById('final-score').textContent = this.state.score;
             document.getElementById('max-combo').textContent = this.state.maxCombo;
-            document.getElementById('rating-badge').textContent = rating;
+            document.getElementById('accuracy').textContent = `${this.state.accuracy.toFixed(2)}%`;
+            document.getElementById('rating-badge').textContent = this.state.rating;
 
             this.showScreen('end-screen');
             Leaderboard.checkNewScore(this.state.score);
         },
-        updateUI() {
-            document.getElementById('score').textContent = Game.state.score;
-            document.getElementById('combo').textContent = Game.state.combo;
-        },
-        showFeedback(type, text) {
-            const feedbackEl = document.createElement('div');
-            feedbackEl.className = `feedback ${type}`;
-            feedbackEl.textContent = text;
-            feedbackContainer.innerHTML = '';
-            feedbackContainer.appendChild(feedbackEl);
-        },
         showFirstPlayHint() {
-            const hints = {
-                conductor: { text: '點擊或按住音符！', style: { top: '30%', left: '50%', transform: 'translateX(-50%)' } },
-                turntable: { text: '點擊轉動的唱片！', style: { top: '25%', left: '50%', transform: 'translateX(-50%)' } },
-                timebeat: { text: '在節拍點擊下落的音符！', style: { bottom: '25%', left: '50%', transform: 'translateX(-50%)' } }
-            };
-            const hintData = hints[this.state.activeGame];
+            const hintText = {
+                timebeat: '跟隨節拍，點擊下落的音符！',
+                conductor: '在音符出現時點擊螢幕！',
+                turntable: '拖動唱臂對準節拍線！'
+            }[this.state.activeGame];
+
             const hintEl = document.createElement('div');
             hintEl.className = 'first-play-hint';
-            hintEl.textContent = hintData.text;
-            Object.assign(hintEl.style, hintData.style);
+            hintEl.textContent = hintText;
+            hintEl.style.top = '30%';
+            hintEl.style.left = '50%';
+            document.body.appendChild(hintEl);
+            setTimeout(() => hintEl.remove(), 3000);
+        },
+        generatePoster() {
+            // 此功能與《時光節拍》原型類似，但使用通用遊戲狀態
+            const posterCanvas = document.getElementById('poster-canvas');
+            const pCtx = posterCanvas.getContext('2d');
+            const width = 400; const height = 600;
+            posterCanvas.width = width; posterCanvas.height = height;
             
-            const gameArea = document.getElementById(`${this.state.activeGame}-game-area`);
-            gameArea.appendChild(hintEl);
-            setTimeout(() => hintEl.remove(), 4000);
-        }
-    });
+            const song = SongData[this.state.activeGame][this.state.currentSongId];
+            const bgImg = new Image();
+            bgImg.crossOrigin = "Anonymous";
+            bgImg.src = song.backgroundSrc;
 
-    // --- 歌曲數據 (指向檔案，不再包含譜面) ---
-    const SongData = {
-        conductor: {
-            song1: { title: '男兒當自強', artist: '林子祥', unlockScore: 0, duration: 19100, beatmapFile: 'conductor_song1.json', audioFile: 'conductor_song1.mp3' },
-            song2: { title: '月亮代表我的心', artist: '鄧麗君', unlockScore: 2000, duration: 17000, beatmapFile: 'conductor_song2.json', audioFile: 'conductor_song2.mp3' }
-        },
-        turntable: {
-            song1: { title: '甜蜜蜜', artist: '鄧麗君', unlockScore: 0, duration: 21000, beatmapFile: 'turntable_song1.json', audioFile: 'turntable_song1.mp3' },
-            song2: { title: '瀟灑走一回', artist: '葉蒨文', unlockScore: 2500, duration: 18000, beatmapFile: 'turntable_song2.json', audioFile: 'turntable_song2.mp3' }
-        },
-        timebeat: {
-            song1: { title: '童年', artist: '羅大佑', unlockScore: 0, duration: 19300, beatmapFile: 'timebeat_song1.json', audioFile: 'timebeat_song1.mp3' },
-            song2: { title: '很愛很愛你', artist: '劉若英', unlockScore: 1800, duration: 17000, beatmapFile: 'timebeat_song2.json', audioFile: 'timebeat_song2.mp3' }
+            bgImg.onload = () => {
+                pCtx.drawImage(bgImg, 0, 0, width, height);
+                pCtx.fillStyle = 'rgba(0, 0, 0, 0.6)'; pCtx.fillRect(0, 0, width, height);
+                
+                // 勳章星星
+                pCtx.fillStyle = 'gold'; pCtx.beginPath();
+                pCtx.moveTo(width/2, 80);
+                for (let i = 0; i < 5; i++) { pCtx.lineTo(width/2 + 50 * Math.cos(Math.PI * (0.9 + i * 0.8)), 80 + 50 * Math.sin(Math.PI * (0.9 + i * 0.8))); }
+                pCtx.closePath(); pCtx.fill();
+
+                pCtx.fillStyle = 'white'; pCtx.font = 'bold 30px sans-serif'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
+                pCtx.fillText(this.state.rating, width/2, 85);
+                
+                pCtx.fillStyle = 'white'; pCtx.font = 'bold 28px sans-serif';
+                pCtx.fillText(song.title, width/2, 180);
+                
+                pCtx.font = '20px sans-serif';
+                pCtx.fillText(`分數: ${this.state.score}`, width/2, 240);
+                pCtx.fillText(`最大連擊: ${this.state.maxCombo}`, width/2, 280);
+                pCtx.fillText(`準確率: ${this.state.accuracy.toFixed(2)}%`, width/2, 320);
+                
+                pCtx.font = 'italic bold 32px sans-serif'; pCtx.fillStyle = 'cyan';
+                pCtx.fillText('時光迴廊', width/2, 450);
+                
+                pCtx.font = '14px sans-serif'; pCtx.fillStyle = 'lightgray';
+                pCtx.fillText('長按圖片即可儲存分享', width/2, 550);
+                
+                document.getElementById('poster-preview-container').style.display = 'flex';
+            };
+            bgImg.onerror = () => {
+                // 處理圖片載入失敗
+                pCtx.fillStyle = '#333'; pCtx.fillRect(0, 0, width, height);
+                pCtx.fillStyle = 'white'; pCtx.font = '24px sans-serif'; pCtx.textAlign = 'center'; pCtx.textBaseline = 'middle';
+                pCtx.fillText('背景圖片加載失敗', width/2, height/2);
+                document.getElementById('poster-preview-container').style.display = 'flex';
+            }
+            document.getElementById('poster-preview-container').onclick = (e) => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
         }
     };
     
-    // --- 歌曲選擇、排行榜、教學模組 (與之前版本相同，省略以節省篇幅) ---
-    const SongOrder = { /* ... */ };
-    const SongSelection = { /* ... */ };
-    const Leaderboard = { /* ... */ };
-    const Tutorial = { /* ... */ };
-    Object.assign(SongOrder, { conductor: ['song1', 'song2'], turntable: ['song1', 'song2'], timebeat: ['song1', 'song2'] });
-    SongSelection.render = function() {
-        const gameType = Game.state.activeGame;
-        const titles = { conductor: '指揮樂章', turntable: '時光金曲', timebeat: '節拍情懷' };
-        document.getElementById('song-selection-title').textContent = titles[gameType];
-        const songListContainer = document.getElementById('song-list');
-        songListContainer.innerHTML = '';
-        const playerProgress = Leaderboard.playerProgress;
-        
-        (SongOrder[gameType] || []).forEach((songId, index) => {
-            const song = SongData[gameType][songId];
-            const prevSongId = index > 0 ? SongOrder[gameType][index - 1] : null;
-            const isUnlocked = !prevSongId || (playerProgress[gameType][prevSongId] || 0) >= song.unlockScore;
-
-            const songEl = document.createElement('div');
-            songEl.className = 'song-choice' + (isUnlocked ? '' : ' locked');
-
-            if (isUnlocked) {
-                const highscore = playerProgress[gameType][songId] ? `<div class="song-highscore">最高分: ${playerProgress[gameType][songId]}</div>` : '';
-                songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>${highscore}`;
-                songEl.addEventListener('click', () => Game.startGame(songId));
-            } else {
-                const prevSongTitle = SongData[gameType][prevSongId].title;
-                songEl.innerHTML = `
-                    <div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>
-                    <div class="song-unlock-condition">完成《${prevSongTitle}》並獲得 ${song.unlockScore} 分</div>
-                    <div class="lock-icon">🔒</div>`;
-            }
-            songListContainer.appendChild(songEl);
-        });
+    // --- 2. 歌曲數據 (整合所有遊戲) ---
+    // 備註：為簡化，譜面數據直接寫入。實際專案應從外部JSON載入。
+    const SongData = {
+        timebeat: {
+            tianmimi: { title: '甜蜜蜜', artist: '鄧麗君', unlockScore: 0, duration: 21000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/甜蜜蜜.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?sweet,love', notes: [ {time:2000,type:"tap"},{time:3200,type:"tap"},{time:4500,type:"strong"},{time:7000,type:"tap"},{time:8200,type:"tap"},{time:9400,type:"tap"},{time:10600,type:"strong"},{time:11800,type:"tap"},{time:14000,type:"tap"},{time:15200,type:"tap"},{time:16500,type:"strong"},{time:17800,type:"tap"},{time:19000,type:"tap"} ]},
+            yueliang: { title: '月亮代表我的心', artist: '鄧麗君', unlockScore: 5000, duration: 17000, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/月亮代表我的心.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?moon,night', notes: [ {time:1000,type:"tap"},{time:2400,type:"tap"},{time:3600,type:"strong"},{time:5000,type:"tap"},{time:6200,type:"tap"},{time:7500,type:"strong"},{time:8800,type:"tap"},{time:10000,type:"tap"},{time:11200,type:"tap"},{time:12600,type:"strong"},{time:13800,type:"tap"},{time:15000,type:"tap"} ]},
+            tongnian: { title: '童年', artist: '羅大佑', unlockScore: 8000, duration: 19300, audioSrc: 'https://cdn.jsdelivr.net/gh/c-at/music-box@main/audio/童年.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?childhood,play', notes: [ {time:1500,type:"tap"},{time:3000,type:"tap"},{time:4400,type:"strong"},{time:6000,type:"tap"},{time:7200,type:"tap"},{time:9000,type:"strong"},{time:10300,type:"tap"},{time:11700,type:"tap"},{time:13000,type:"tap"},{time:14500,type:"strong"},{time:16000,type:"tap"},{time:17300,type:"tap"} ]}
+        },
+        conductor: { // 指揮家歌曲數據 (待填充)
+             song1: { title: '真心英雄', artist: '周華健', unlockScore: 0, duration: 18000, audioSrc: '#', backgroundSrc: 'https://source.unsplash.com/random/800x600/?hero,fire', notes: [] }
+        },
+        turntable: { // 時光唱盤歌曲數據 (待填充)
+             song1: { title: '忘情水', artist: '劉德華', unlockScore: 0, duration: 15000, audioSrc: '#', backgroundSrc: 'https://source.unsplash.com/random/800x600/?water,sad', notes: [] }
+        }
     };
-    Object.assign(Leaderboard, {
+    const SongOrder = {
+        timebeat: ['tianmimi', 'yueliang', 'tongnian'],
+        conductor: ['song1'],
+        turntable: ['song1'],
+    };
+    
+    // --- 3. 排行榜 & 歌曲選擇 ---
+    const Leaderboard = {
         playerProgress: { conductor: {}, turntable: {}, timebeat: {} },
         leaderboards: { conductor: {}, turntable: {}, timebeat: {} },
         init() {
-            try {
-                const savedProgress = localStorage.getItem('playerProgress');
-                if (savedProgress) this.playerProgress = JSON.parse(savedProgress);
-                const savedBoards = localStorage.getItem('leaderboards');
-                if (savedBoards) this.leaderboards = JSON.parse(savedBoards);
-            } catch (e) { console.error("無法讀取存檔:", e); }
-
-            ['conductor', 'turntable', 'timebeat'].forEach(game => {
-                if (!this.playerProgress[game]) this.playerProgress[game] = {};
-                if (!this.leaderboards[game]) this.leaderboards[game] = {};
-            });
+            const savedProgress = localStorage.getItem('playerProgress');
+            if (savedProgress) this.playerProgress = JSON.parse(savedProgress); else this.save();
+            const savedBoards = localStorage.getItem('leaderboards');
+            if (savedBoards) this.leaderboards = JSON.parse(savedBoards); else this.save();
 
             document.getElementById('submit-score-btn').addEventListener('click', () => this.submitScore());
             document.getElementById('back-from-leaderboard-btn').addEventListener('click', () => Game.showScreen('end-screen'));
         },
         getScores(game, song) {
+            if (!this.leaderboards[game]) this.leaderboards[game] = {};
             if (!this.leaderboards[game][song]) this.leaderboards[game][song] = [];
             return this.leaderboards[game][song];
         },
@@ -547,18 +501,20 @@
             const scores = this.getScores(game, song);
             scores.push({ name, score });
             scores.sort((a, b) => b.score - a.score);
-            this.leaderboards[game][song] = scores.slice(0, 5);
+            this.leaderboards[game][song] = scores.slice(0, 5); // 只保留前5名
             this.save();
         },
         checkNewScore(score) {
             const game = Game.state.activeGame;
             const song = Game.state.currentSongId;
             const scores = this.getScores(game, song);
-            if (scores.length < 5 || score > (scores[scores.length - 1].score || 0) ) {
+            if (scores.length < 5 || score > scores[scores.length - 1].score) {
                 document.getElementById('name-prompt').style.display = 'block';
             } else {
                 document.getElementById('name-prompt').style.display = 'none';
             }
+            // 更新進度
+            if (!this.playerProgress[game]) this.playerProgress[game] = {};
             const prevHighScore = this.playerProgress[game][song] || 0;
             if (score > prevHighScore) {
                 this.playerProgress[game][song] = score;
@@ -566,10 +522,12 @@
             }
         },
         submitScore() {
-            const name = document.getElementById('player-name-input').value.toUpperCase() || 'AAA';
+            const nameInput = document.getElementById('player-name-input');
+            const name = nameInput.value.toUpperCase() || 'AAA';
             this.addScore(Game.state.activeGame, Game.state.currentSongId, name, Game.state.score);
             document.getElementById('name-prompt').style.display = 'none';
             this.render();
+            nameInput.value = "AAA";
         },
         render() {
             const game = Game.state.activeGame;
@@ -594,82 +552,282 @@
             this.render();
         },
         save() {
-            try {
-                localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress));
-                localStorage.setItem('leaderboards', JSON.stringify(this.leaderboards));
-            } catch (e) { console.error("無法儲存進度:", e); }
+            localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress));
+            localStorage.setItem('leaderboards', JSON.stringify(this.leaderboards));
         }
-    });
-    Tutorial.start = function() { /* Omitted */ }; // The tutorial logic remains the same
+    };
+    const SongSelection = {
+        render() {
+            const gameType = Game.state.activeGame;
+            const titleMap = { timebeat: '時光金曲', conductor: '指揮樂章', turntable: '懷舊唱盤' };
+            document.getElementById('song-selection-title').textContent = titleMap[gameType] || '選擇曲目';
+            
+            const songListContainer = document.getElementById('song-list');
+            songListContainer.innerHTML = '';
+            const playerProgress = Leaderboard.playerProgress;
+            
+            SongOrder[gameType].forEach((songId, index) => {
+                const song = SongData[gameType][songId];
+                const prevSongId = index > 0 ? SongOrder[gameType][index - 1] : null;
+                const isUnlocked = !prevSongId || (playerProgress[gameType] && (playerProgress[gameType][prevSongId] || 0) >= song.unlockScore);
 
-    // --- 遊戲邏輯模組 (更新為接收譜面) ---
-    const Conductor = {
-        // ... (屬性定義與之前相同)
-        start(notes, songData) { // *** 接收 notes 和 songData ***
-            this.noteQueue = JSON.parse(JSON.stringify(notes));
-            this.activeNote = null;
-            this.gameArea.innerHTML = '';
-            this.startTime = Date.now();
-            this.songDuration = songData.duration;
-            Game.state.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
-        },
-        gameLoop() {
-            // ... (大部分邏輯相同)
-            if (gameTime > this.songDuration && !this.activeNote && this.noteQueue.length === 0) {
-                Game.endGame();
-            } else {
-                Game.state.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
+                const songEl = document.createElement('div');
+                songEl.className = 'song-choice' + (isUnlocked ? '' : ' locked');
+
+                if (isUnlocked) {
+                    const highscore = (playerProgress[gameType] && playerProgress[gameType][songId]) ? `<div class="song-highscore">最高分: ${playerProgress[gameType][songId]}</div>` : '';
+                    songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>${highscore}`;
+                    songEl.addEventListener('click', () => Game.startGame(songId));
+                } else {
+                    const prevSongTitle = SongData[gameType][prevSongId].title;
+                    songEl.innerHTML = `
+                        <div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>
+                        <div class="song-unlock-condition">完成《${prevSongTitle}》並獲得 ${song.unlockScore} 分以解鎖</div>
+                        <div class="lock-icon">🔒</div>`;
+                }
+                songListContainer.appendChild(songEl);
+            });
+        }
+    };
+
+    // --- 4. 遊戲邏輯模組 ---
+    const TimeBeat = {
+        canvas: document.getElementById('timebeat-canvas'),
+        ctx: null,
+        notes: [],
+        nextNoteIndex: 0,
+        comboDisplay: document.querySelector('#timebeat-game-area .combo-display'),
+        gameBackground: document.querySelector('#timebeat-game-area .game-background'),
+        
+        start() {
+            this.ctx = this.canvas.getContext('2d');
+            this.resizeCanvas();
+            window.addEventListener('resize', this.resizeCanvas.bind(this));
+            this.canvas.addEventListener('pointerdown', this.handleTap.bind(this));
+
+            const songData = SongData.timebeat[Game.state.currentSongId];
+            this.notes = [];
+            this.nextNoteIndex = 0;
+            Game.state.totalNotes = songData.notes.length;
+            
+            // 處理譜面
+            let trackCounter = 0;
+            const trackPattern = [0, 1, 2, 1];
+            this.beatmap = songData.notes.map(note => {
+                const track = trackPattern[trackCounter % trackPattern.length];
+                trackCounter++;
+                return { ...note, track: track };
+            });
+
+            // UI準備
+            this.comboDisplay.textContent = '';
+            this.gameBackground.style.backgroundImage = `url('${songData.backgroundSrc}')`;
+            this.gameBackground.style.filter = 'blur(15px)';
+            
+            // --- 聲音播放優化 ---
+            const playPromise = gameAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    gameAudio.pause();
+                    setTimeout(() => {
+                        gameAudio.currentTime = 0;
+                        gameAudio.play();
+                        Game.state.startTime = performance.now();
+                        Game.state.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+                    }, 1500);
+                }).catch(error => {
+                    console.error("音訊自動播放失敗:", error);
+                    alert("無法自動播放音訊。請確保您的裝置非靜音模式，並允許瀏覽器播放聲音。點擊確定後，遊戲將在無聲模式下開始。");
+                    setTimeout(() => {
+                        Game.state.startTime = performance.now();
+                        Game.state.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+                    }, 1500);
+                });
             }
         },
-        // ... (其他函數不變)
-    };
-    const Turntable = {
-        // ...
-        start(notes, songData) { // *** 接收 notes 和 songData ***
-            this.noteQueue = JSON.parse(JSON.stringify(notes));
-            // ... (其餘啟動邏輯)
-        },
-        // ...
-    };
-    const TimeBeat = {
-        // ...
-        start(notes, songData) { // *** 接收 notes 和 songData ***
-            this.noteQueue = JSON.parse(JSON.stringify(notes));
-            // ... (其餘啟動邏輯)
-        },
-        // ...
-    };
-    // 為了可讀性，此處僅展示修改的骨架，完整邏輯請參考上一版。
-    // 只需將所有 start() 改為 start(notes, songData) 並調整譜面來源即可。
-    // 以下為 Conductor 的完整替換範例：
-    Object.assign(Conductor, {
-        gameArea: document.getElementById('conductor-game-area'),
-        pointerPos: { x: 0, y: 0 }, isPointerDown: false, startTime: 0, songDuration: 0,
-        noteQueue: [], activeNote: null, holdTimer: null,
-        start(notes, songData) {
-            this.noteQueue = JSON.parse(JSON.stringify(notes));
-            this.activeNote = null;
-            this.gameArea.innerHTML = '';
-            this.startTime = Date.now();
-            this.songDuration = songData.duration;
-            Game.state.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
-        },
-        gameLoop() { /* ... unchanged ... */ },
-        spawnNote() { /* ... unchanged ... */ },
-        judge(type) { /* ... unchanged ... */ },
-        onPointerDown(e) { this.isPointerDown = true; this.updatePointerPos(e); },
-        onPointerUp(e) { /* ... unchanged ... */ },
-        onPointerMove(e) { /* ... unchanged ... */ },
-        updatePointerPos(e) { const touch = e.touches ? e.touches[0] : e; this.pointerPos.x = touch.clientX; this.pointerPos.y = touch.clientY; }
-    });
+        
+        gameLoop(currentTime) {
+            if (!Game.state.isPlaying) return;
+            const elapsedTime = currentTime - Game.state.startTime;
+            
+            while (this.nextNoteIndex < this.beatmap.length && this.beatmap[this.nextNoteIndex].time < elapsedTime + 2000) {
+                const noteData = this.beatmap[this.nextNoteIndex];
+                this.notes.push({ time: noteData.time, track: noteData.track, type: noteData.type, y: 0, active: true });
+                this.nextNoteIndex++;
+            }
 
-    // --- 全局事件監聽與初始化 ---
-    // ... (與之前相同)
+            this.update(elapsedTime);
+            this.draw();
+            
+            const songDuration = SongData.timebeat[Game.state.currentSongId].duration;
+            if (elapsedTime >= songDuration) { Game.endGame(); return; }
+            
+            Game.state.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
+        },
+        update(elapsedTime) {
+            const hitLineY = this.canvas.height * 0.85;
+            this.notes.forEach(note => {
+                if (note.active) {
+                    const timeDiff = note.time - elapsedTime;
+                    note.y = hitLineY - (timeDiff * 0.8); // Note Speed
+                    if (timeDiff < -150) { // Miss 判定
+                        note.active = false;
+                        Game.state.hits.miss++;
+                        this.resetCombo();
+                    }
+                }
+            });
+            this.notes = this.notes.filter(note => note.active || note.y < this.canvas.height);
+        },
+        draw() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            const numTracks = 3, trackWidth = this.canvas.width / numTracks, hitLineY = this.canvas.height * 0.85;
+
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; this.ctx.lineWidth = 2;
+            for (let i = 1; i < numTracks; i++) { this.ctx.beginPath(); this.ctx.moveTo(trackWidth * i, 0); this.ctx.lineTo(trackWidth * i, this.canvas.height); this.ctx.stroke(); }
+
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; this.ctx.fillRect(0, hitLineY - 25, this.canvas.width, 50);
+            this.ctx.strokeStyle = 'gold'; this.ctx.lineWidth = 3; this.ctx.strokeRect(0, hitLineY - 25, this.canvas.width, 50);
+
+            this.notes.forEach(note => {
+                if (note.active && note.y > -50 && note.y < this.canvas.height) {
+                    const x = trackWidth * note.track + trackWidth / 2;
+                    const isStrong = note.type === 'strong';
+                    const radius = isStrong ? trackWidth * 0.45 : trackWidth * 0.35;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, note.y, radius, 0, Math.PI * 2);
+                    
+                    this.ctx.fillStyle = isStrong ? 'orangered' : 'cyan';
+                    this.ctx.shadowColor = isStrong ? 'orangered' : 'cyan';
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                }
+            });
+        },
+        handleTap(e) {
+            if (!Game.state.startTime) return;
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const track = Math.floor(x / (this.canvas.width / 3));
+            const elapsedTime = performance.now() - Game.state.startTime;
+
+            for (let i = 0; i < this.notes.length; i++) {
+                const note = this.notes[i];
+                if (note.active && note.track === track) {
+                    const timeDiff = Math.abs(note.time - elapsedTime);
+                    if (timeDiff < 150) {
+                        if (timeDiff < 70) {
+                            Game.state.score += 100 + Game.state.combo * 5;
+                            Game.state.hits.perfect++;
+                        } else {
+                            Game.state.score += 50;
+                            Game.state.hits.good++;
+                        }
+                        Game.state.combo++;
+                        Game.state.maxCombo = Math.max(Game.state.maxCombo, Game.state.combo);
+                        this.updateComboDisplay();
+                        this.updateBackgroundBlur();
+                        note.active = false;
+                        break;
+                    }
+                }
+            }
+            document.getElementById('score').textContent = Game.state.score;
+            document.getElementById('combo').textContent = Game.state.combo;
+        },
+        resetCombo() {
+            Game.state.combo = 0;
+            this.updateComboDisplay();
+            this.updateBackgroundBlur();
+            document.getElementById('combo').textContent = Game.state.combo;
+        },
+        updateComboDisplay() {
+            if (Game.state.combo > 2) {
+                this.comboDisplay.textContent = `${Game.state.combo} COMBO`;
+                this.comboDisplay.classList.add('show');
+                setTimeout(() => this.comboDisplay.classList.remove('show'), 200);
+            } else {
+                this.comboDisplay.textContent = '';
+            }
+        },
+        updateBackgroundBlur() {
+            const maxBlur = 15, comboForMaxClarity = 50;
+            let blurAmount = maxBlur - (Math.min(Game.state.combo, comboForMaxClarity) / comboForMaxClarity) * maxBlur;
+            this.gameBackground.style.filter = `blur(${blurAmount}px)`;
+        },
+        resizeCanvas() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; }
+    };
+
+    const Conductor = {
+        start() {
+             alert("《指揮家》遊戲模式正在銳意開發中，敬請期待！");
+             Game.showScreen('song-selection-screen');
+        },
+    };
+
+    const Turntable = {
+        start() {
+             alert("《時光唱盤》遊戲模式正在銳意開發中，敬請期待！");
+             Game.showScreen('song-selection-screen');
+        },
+    };
     
-    // --- 最終初始化 ---
-    Leaderboard.init();
-    AudioManager.preload();
+    // --- 5. 教學模組 ---
+    const Tutorial = {
+        container: document.querySelector('#tutorial-screen .tutorial-container'),
+        timer: null,
+        step: 0,
+        start() {
+            this.step = 0;
+            this.runStep();
+            this.timer = setInterval(this.runStep.bind(this), 4000);
+        },
+        stop() {
+            clearInterval(this.timer);
+            this.container.innerHTML = '<h2>玩法示範</h2>';
+        },
+        runStep() {
+            this.container.innerHTML = '<h2>玩法示範</h2>'; // 清空
+            const demos = [this.demoTimeBeat, this.demoConductor, this.demoTurntable];
+            demos[this.step % demos.length].call(this);
+            this.step++;
+        },
+        demoTimeBeat() {
+            const item = document.createElement('div');
+            item.className = 'tutorial-item active';
+            item.innerHTML = `<p style="font-size:1.2rem; margin-top: 150px;"><b>時光節拍:</b><br>在音符到達下方判定區時點擊！</p>`;
+            const note = document.createElement('div');
+            note.className = 'demo-note';
+            note.style.width = '50px'; note.style.height = '50px';
+            note.style.left = '50%'; note.style.top = '10%';
+            item.appendChild(note);
+            this.container.appendChild(item);
+            
+            note.animate([
+                { top: '10%' },
+                { top: '85%' }
+            ], { duration: 1500, easing: 'linear' });
+        },
+        demoConductor() {
+             const item = document.createElement('div');
+            item.className = 'tutorial-item active';
+            item.innerHTML = `<p style="font-size:1.2rem; margin-top: 150px;"><b>指揮家 (待開發):</b><br>在音符出現時點擊！</p>`;
+             this.container.appendChild(item);
+        },
+        demoTurntable() {
+             const item = document.createElement('div');
+            item.className = 'tutorial-item active';
+            item.innerHTML = `<p style="font-size:1.2rem; margin-top: 150px;"><b>時光唱盤 (待開發):</b><br>拖動唱臂對準節拍！</p>`;
+             this.container.appendChild(item);
+        }
+    };
+
+
+    // --- 6. 最終初始化 ---
     Game.init();
+
     </script>
 </body>
 </html>
