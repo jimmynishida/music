@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>時光迴廊 - 懷舊音樂之旅 v3.4</title>
+    <title>時光迴廊 - 懷舊音樂之旅 v3.5</title>
     <style>
-        /* CSS 樣式與之前版本完全相同，此處為節省篇幅省略... */
-        :root {
-            --record-size: 300px; --theme-color-1: #ff8c00; --theme-color-2: #483d8b;
-            --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-        }
+        /* CSS 樣式與之前版本完全相同 */
+        :root { --record-size: 300px; --theme-color-1: #ff8c00; --theme-color-2: #483d8b; --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: var(--font-family); overflow: hidden; touch-action: none; background: linear-gradient(135deg, #2a2a3e, #4a3a4a); color: white; user-select: none; -webkit-user-select: none; }
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; transition: opacity 0.5s ease; }
         .screen.active { display: flex; }
@@ -111,7 +108,7 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.4 [穩定音源版]
+    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.5 [FINAL]
     // =================================================================================
 
     // --- 1. 全局狀態與 DOM ---
@@ -121,7 +118,6 @@
     const gameAudio = document.getElementById('game-audio');
 
     const Game = {
-        // ... Game object properties and methods from v3.3 ...
         state: {
             activeGame: null, currentSongId: null, score: 0, combo: 0, maxCombo: 0,
             hits: { perfect: 0, good: 0, miss: 0 }, totalNotes: 0, accuracy: 0, rating: 'C',
@@ -132,7 +128,9 @@
             this.state.isFirstPlay = firstPlayData ? JSON.parse(firstPlayData) : { conductor: true, turntable: true, timebeat: true };
 
             document.querySelectorAll('.game-choice-card').forEach(card => card.addEventListener('click', () => {
-                this.state.activeGame = card.dataset.gametype; this.showScreen('song-selection-screen'); SongSelection.render();
+                this.state.activeGame = card.dataset.gametype;
+                this.showScreen('song-selection-screen');
+                SongSelection.render();
             }));
             document.getElementById('back-to-main-menu-btn').addEventListener('click', () => this.showScreen('main-menu-screen'));
             document.getElementById('show-tutorial-btn').addEventListener('click', () => { this.showScreen('tutorial-screen'); Tutorial.start(); });
@@ -187,13 +185,18 @@
                 loadingIndicator.textContent = '準備就緒！';
                 startBtn.disabled = false;
                 gameAudio.removeEventListener('canplaythrough', onCanPlay);
+                gameAudio.removeEventListener('error', onError);
             };
-            gameAudio.addEventListener('canplaythrough', onCanPlay);
-            
-            gameAudio.onerror = () => {
+            const onError = () => {
                 loadingIndicator.textContent = '音樂載入失敗！';
-                alert('抱歉，無法載入該歌曲的音訊檔案。');
+                alert('抱歉，無法載入該歌曲的音訊檔案。請檢查您的網路連線或MP3檔案路徑。');
+                gameAudio.removeEventListener('canplaythrough', onCanPlay);
+                gameAudio.removeEventListener('error', onError);
             };
+
+            gameAudio.addEventListener('canplaythrough', onCanPlay);
+            gameAudio.addEventListener('error', onError);
+            
             gameAudio.load();
         },
         endGame() {
@@ -297,7 +300,7 @@
                     playPromise.then(startLoop).catch(error => {
                         console.error("音訊播放失敗:", error);
                         startLoop();
-                    });
+                });
                 } else {
                     startLoop();
                 }
@@ -316,7 +319,7 @@
         }
     };
     
-// --- 歌曲數據 (使用本地相對路徑) ---
+    // --- 歌曲數據 ---
     const SongData = {
         timebeat: {
             tongnian: { title: '童年', artist: '羅大佑', unlockScore: 0, duration: 19300, audioSrc: 'audio/童年.mp3', backgroundSrc: 'https://source.unsplash.com/random/800x600/?childhood,play', notes: JSON.parse('[{"time":1.5,"type":"tap"},{"time":3,"type":"tap"},{"time":4.4,"type":"strong"},{"time":6,"type":"tap"},{"time":7.2,"type":"tap"},{"time":9,"type":"strong"},{"time":10.3,"type":"tap"},{"time":11.7,"type":"tap"},{"time":13,"type":"tap"},{"time":14.5,"type":"strong"},{"time":16,"type":"tap"},{"time":17.3,"type":"tap"}]').map(n => ({...n, time: n.time * 1000}))},
