@@ -111,12 +111,6 @@
     //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.5 [FINAL]
     // =================================================================================
 
-    // --- 1. 全局狀態與 DOM ---
-    const allScreens = document.querySelectorAll('.screen');
-    const gameUIs = document.querySelectorAll('.game-ui-container');
-    const gameStatsEl = document.querySelector('.game-stats');
-    const gameAudio = document.getElementById('game-audio');
-
     const Game = {
         state: {
             activeGame: null, currentSongId: null, score: 0, combo: 0, maxCombo: 0,
@@ -135,12 +129,10 @@
             document.getElementById('back-to-main-menu-btn').addEventListener('click', () => this.showScreen('main-menu-screen'));
             document.getElementById('show-tutorial-btn').addEventListener('click', () => { this.showScreen('tutorial-screen'); Tutorial.start(); });
             document.getElementById('skip-tutorial-btn').addEventListener('click', () => { Tutorial.stop(); this.showScreen('main-menu-screen'); });
-            
             document.getElementById('retry-button').addEventListener('click', () => this.startGame(this.state.currentSongId));
             document.getElementById('back-to-song-menu-btn').addEventListener('click', () => { this.showScreen('song-selection-screen'); SongSelection.render(); });
             document.getElementById('view-leaderboard-btn').addEventListener('click', () => Leaderboard.show());
             document.getElementById('poster-button').addEventListener('click', () => this.generatePoster());
-
             document.getElementById('start-performance-btn').addEventListener('click', () => {
                 this.util.playAudioAndStartLoop();
             });
@@ -158,12 +150,9 @@
                 this.state.isFirstPlay[this.state.activeGame] = false;
                 localStorage.setItem('isFirstPlay_v3', JSON.stringify(this.state.isFirstPlay));
             }
-
             Object.assign(this.state, { currentSongId: songId, score: 0, combo: 0, maxCombo: 0, hits: { perfect: 0, good: 0, miss: 0 }, isPlaying: false, startTime: null });
-            
             const songData = SongData[this.state.activeGame][songId];
             this.state.totalNotes = songData.notes.filter(n => n.type !== 'start' && n.type !== 'checkpoint').length;
-
             this.showReadyScreen(songId);
         },
         showReadyScreen(songId) {
@@ -171,16 +160,12 @@
             const songData = SongData[this.state.activeGame][songId];
             document.getElementById('ready-song-title').textContent = songData.title;
             document.getElementById('ready-song-artist').textContent = songData.artist;
-            
             const startBtn = document.getElementById('start-performance-btn');
             const loadingIndicator = document.getElementById('loading-indicator');
-
             startBtn.disabled = true;
             loadingIndicator.textContent = '音樂載入中...';
             loadingIndicator.style.display = 'block';
-
             gameAudio.src = songData.audioSrc;
-            
             const onCanPlay = () => {
                 loadingIndicator.textContent = '準備就緒！';
                 startBtn.disabled = false;
@@ -189,53 +174,40 @@
             };
             const onError = () => {
                 loadingIndicator.textContent = '音樂載入失敗！';
-                alert('抱歉，無法載入該歌曲的音訊檔案。請檢查您的網路連線或MP3檔案路徑。');
+                alert('抱歉，無法載入該歌曲的音訊檔案。\n\n可能原因：\n1. 網路連線問題。\n2. 您未將 audio 資料夾與 index.html 一同部署。\n3. audio 資料夾中的MP3檔名與程式碼不符。');
                 gameAudio.removeEventListener('canplaythrough', onCanPlay);
                 gameAudio.removeEventListener('error', onError);
             };
-
             gameAudio.addEventListener('canplaythrough', onCanPlay);
             gameAudio.addEventListener('error', onError);
-            
             gameAudio.load();
         },
         endGame() {
             if (!this.state.isPlaying) return;
             this.state.isPlaying = false;
-            if(this.state.animationFrameId) {
-                cancelAnimationFrame(this.state.animationFrameId);
-                this.state.animationFrameId = null;
-            }
+            if(this.state.animationFrameId) { cancelAnimationFrame(this.state.animationFrameId); this.state.animationFrameId = null; }
             gameAudio.pause();
             gameStatsEl.style.display = 'none';
-
             const perfectScore = this.state.hits.perfect * 2;
             const goodScore = this.state.hits.good;
             const maxPossibleScore = (this.state.totalNotes > 0) ? (this.state.totalNotes * 2) : 0;
             this.state.accuracy = maxPossibleScore > 0 ? ((perfectScore + goodScore) / maxPossibleScore) * 100 : 0;
-            
             if (this.state.accuracy >= 100 && this.state.hits.miss === 0) this.state.rating = 'S+';
             else if (this.state.accuracy > 95) this.state.rating = 'S';
             else if (this.state.accuracy > 90) this.state.rating = 'A';
             else if (this.state.accuracy > 80) this.state.rating = 'B';
             else this.state.rating = 'C';
-            
             const songData = SongData[this.state.activeGame][this.state.currentSongId];
             document.getElementById('end-title').textContent = songData.title;
             document.getElementById('final-score').textContent = this.state.score;
             document.getElementById('max-combo').textContent = this.state.maxCombo;
             document.getElementById('accuracy').textContent = `${this.state.accuracy.toFixed(2)}%`;
             document.getElementById('rating-badge').textContent = this.state.rating;
-
             this.showScreen('end-screen');
             Leaderboard.checkNewScore(this.state.score);
         },
         showFirstPlayHint() {
-            const hintText = {
-                timebeat: '跟隨節拍，點擊下落的音符！',
-                conductor: '在音符出現時，滑動手指觸碰！',
-                turntable: '拖動唱臂，對準頂部判定區！'
-            }[this.state.activeGame];
+            const hintText = { timebeat: '跟隨節拍，點擊下落的音符！', conductor: '在音符出現時，滑動手指觸碰！', turntable: '拖動唱臂，對準頂部判定區！' }[this.state.activeGame];
             const hintEl = document.createElement('div');
             hintEl.className = 'first-play-hint';
             hintEl.textContent = hintText;
@@ -285,37 +257,19 @@
                 const activeGameArea = document.getElementById(`${Game.state.activeGame}-game-area`);
                 activeGameArea.classList.add('active');
                 gameStatsEl.style.display = 'flex';
-
                 const gameModuleMap = { timebeat: TimeBeat, conductor: Conductor, turntable: Turntable };
                 const gameModule = gameModuleMap[Game.state.activeGame];
-
                 const startLoop = () => {
                     Game.state.isPlaying = true;
                     Game.state.startTime = performance.now();
                     Game.state.animationFrameId = requestAnimationFrame(gameModule.gameLoop.bind(gameModule));
                 };
-
                 const playPromise = gameAudio.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(startLoop).catch(error => {
-                        console.error("音訊播放失敗:", error);
-                        startLoop();
-                });
-                } else {
-                    startLoop();
-                }
+                if (playPromise !== undefined) { playPromise.then(startLoop).catch(error => { console.error("音訊播放失敗:", error); startLoop(); }); }
+                else { startLoop(); }
             },
-            showFeedback(type, text) {
-                const feedbackEl = document.createElement('div');
-                feedbackEl.className = `feedback ${type}`;
-                feedbackEl.textContent = text;
-                document.body.appendChild(feedbackEl);
-                setTimeout(() => feedbackEl.remove(), 1000);
-            },
-            updateUI() {
-                document.getElementById('score').textContent = Game.state.score;
-                document.getElementById('combo').textContent = Game.state.combo;
-            }
+            showFeedback(type, text) { const feedbackEl = document.createElement('div'); feedbackEl.className = `feedback ${type}`; feedbackEl.textContent = text; document.body.appendChild(feedbackEl); setTimeout(() => feedbackEl.remove(), 1000); },
+            updateUI() { document.getElementById('score').textContent = Game.state.score; document.getElementById('combo').textContent = Game.state.combo; }
         }
     };
     
