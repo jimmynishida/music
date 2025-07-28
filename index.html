@@ -108,7 +108,7 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.8 [FINAL STABLE]
+    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.8 [結構修正最終版]
     // =================================================================================
 
     const Game = {
@@ -118,9 +118,12 @@
             isPlaying: false, isFirstPlay: {}, startTime: null, animationFrameId: null,
         },
         init() {
-            const firstPlayData = localStorage.getItem('isFirstPlay_v3');
-            try { this.state.isFirstPlay = firstPlayData ? JSON.parse(firstPlayData) : { conductor: true, turntable: true, timebeat: true };
-            } catch (e) { this.state.isFirstPlay = { conductor: true, turntable: true, timebeat: true }; }
+            try {
+                const firstPlayData = localStorage.getItem('isFirstPlay_v3');
+                this.state.isFirstPlay = firstPlayData ? JSON.parse(firstPlayData) : { conductor: true, turntable: true, timebeat: true };
+            } catch (e) {
+                this.state.isFirstPlay = { conductor: true, turntable: true, timebeat: true };
+            }
 
             document.querySelectorAll('.game-choice-card').forEach(card => card.addEventListener('click', () => {
                 this.state.activeGame = card.dataset.gametype;
@@ -289,7 +292,6 @@
         addScore(game, song, name, score) { const scores = this.getScores(game, song); scores.push({ name, score }); scores.sort((a, b) => b.score - a.score); this.leaderboards[game][song] = scores.slice(0, 5); this.save(); },
         checkNewScore(score) { const game = Game.state.activeGame; const song = Game.state.currentSongId; const scores = this.getScores(game, song); if (scores.length < 5 || score > scores[scores.length - 1].score) { document.getElementById('name-prompt').style.display = 'block'; } else { document.getElementById('name-prompt').style.display = 'none'; } if (!this.playerProgress[game]) this.playerProgress[game] = {}; const prevHighScore = this.playerProgress[game][song] || 0; if (score > prevHighScore) { this.playerProgress[game][song] = score; this.save(); } },
         submitScore() { const nameInput = document.getElementById('player-name-input'); const name = nameInput.value.toUpperCase() || 'AAA'; this.addScore(Game.state.activeGame, Game.state.currentSongId, name, Game.state.score); document.getElementById('name-prompt').style.display = 'none'; this.render(); nameInput.value = "AAA"; },
-        // 【安全性修正】使用 textContent 避免 XSS 攻擊
         render() {
             const game = Game.state.activeGame; const song = Game.state.currentSongId;
             const songTitle = SongData[game][song].title;
@@ -302,9 +304,9 @@
                 scores.forEach((entry, index) => {
                     const li = document.createElement('li');
                     const nameSpan = document.createElement('span');
-                    nameSpan.textContent = `#${index + 1} ${entry.name}`; // 安全
+                    nameSpan.textContent = `#${index + 1} ${entry.name}`;
                     const scoreSpan = document.createElement('span');
-                    scoreSpan.textContent = entry.score; // 安全
+                    scoreSpan.textContent = entry.score;
                     li.appendChild(nameSpan);
                     li.appendChild(scoreSpan);
                     listEl.appendChild(li);
@@ -317,7 +319,6 @@
     const SongSelection = { render() { const gameType = Game.state.activeGame; const titleMap = { timebeat: '時光節拍', conductor: '指揮樂章', turntable: '懷舊唱盤' }; document.getElementById('song-selection-title').textContent = titleMap[gameType] || '選擇曲目'; const songListContainer = document.getElementById('song-list'); songListContainer.innerHTML = ''; const playerProgress = Leaderboard.playerProgress; SongOrder[gameType].forEach((songId, index) => { const song = SongData[gameType][songId]; const prevSongId = index > 0 ? SongOrder[gameType][index - 1] : null; const isUnlocked = !prevSongId || (playerProgress[gameType] && (playerProgress[gameType][prevSongId] || 0) >= song.unlockScore); const songEl = document.createElement('div'); songEl.className = 'song-choice' + (isUnlocked ? '' : ' locked'); if (isUnlocked) { const highscore = (playerProgress[gameType] && playerProgress[gameType][songId]) ? `<div class="song-highscore">最高分: ${playerProgress[gameType][songId]}</div>` : ''; songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>${highscore}`; songEl.addEventListener('click', () => Game.startGame(songId)); } else { const prevSongTitle = SongData[gameType][prevSongId].title; songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div><div class="song-unlock-condition">完成《${prevSongTitle}》並獲得 ${song.unlockScore} 分</div><div class="lock-icon">🔒</div>`; } songListContainer.appendChild(songEl); }); } };
     
     // --- 遊戲邏輯模組 ---
-    // 【結構修正】確保所有模組的函數定義都在正確的位置
     const TimeBeat = {
         canvas: document.getElementById('timebeat-canvas'), ctx: null, notes: [], nextNoteIndex: 0,
         comboDisplay: document.querySelector('#timebeat-game-area .combo-display'),
