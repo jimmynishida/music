@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>時光迴廊 - 懷舊音樂之旅 v3.7</title>
+    <title>時光迴廊 - 懷舊音樂之旅 v3.8</title>
     <style>
         /* CSS 樣式與之前版本完全相同 */
         :root { --record-size: 300px; --theme-color-1: #ff8c00; --theme-color-2: #483d8b; --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
@@ -108,7 +108,7 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.7 [安全性修正版]
+    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.8 [FINAL STABLE]
     // =================================================================================
 
     const Game = {
@@ -119,7 +119,8 @@
         },
         init() {
             const firstPlayData = localStorage.getItem('isFirstPlay_v3');
-            this.state.isFirstPlay = firstPlayData ? JSON.parse(firstPlayData) : { conductor: true, turntable: true, timebeat: true };
+            try { this.state.isFirstPlay = firstPlayData ? JSON.parse(firstPlayData) : { conductor: true, turntable: true, timebeat: true };
+            } catch (e) { this.state.isFirstPlay = { conductor: true, turntable: true, timebeat: true }; }
 
             document.querySelectorAll('.game-choice-card').forEach(card => card.addEventListener('click', () => {
                 this.state.activeGame = card.dataset.gametype;
@@ -280,11 +281,15 @@
     // --- 排行榜 & 歌曲選擇 ---
     const Leaderboard = {
         playerProgress: { conductor: {}, turntable: {}, timebeat: {} }, leaderboards: { conductor: {}, turntable: {}, timebeat: {} },
-        init() { const savedProgress = localStorage.getItem('playerProgress_v3'); if (savedProgress) this.playerProgress = JSON.parse(savedProgress); else this.save(); const savedBoards = localStorage.getItem('leaderboards_v3'); if (savedBoards) this.leaderboards = JSON.parse(savedBoards); else this.save(); document.getElementById('submit-score-btn').addEventListener('click', () => this.submitScore()); document.getElementById('back-from-leaderboard-btn').addEventListener('click', () => Game.showScreen('end-screen')); },
+        init() {
+            try { const savedProgress = localStorage.getItem('playerProgress_v3'); if (savedProgress) this.playerProgress = JSON.parse(savedProgress); else this.save(); const savedBoards = localStorage.getItem('leaderboards_v3'); if (savedBoards) this.leaderboards = JSON.parse(savedBoards); else this.save(); } catch(e) { console.error("Could not parse localStorage data:", e); this.save(); }
+            document.getElementById('submit-score-btn').addEventListener('click', () => this.submitScore()); document.getElementById('back-from-leaderboard-btn').addEventListener('click', () => Game.showScreen('end-screen'));
+        },
         getScores(game, song) { if (!this.leaderboards[game]) this.leaderboards[game] = {}; if (!this.leaderboards[game][song]) this.leaderboards[game][song] = []; return this.leaderboards[game][song]; },
         addScore(game, song, name, score) { const scores = this.getScores(game, song); scores.push({ name, score }); scores.sort((a, b) => b.score - a.score); this.leaderboards[game][song] = scores.slice(0, 5); this.save(); },
         checkNewScore(score) { const game = Game.state.activeGame; const song = Game.state.currentSongId; const scores = this.getScores(game, song); if (scores.length < 5 || score > scores[scores.length - 1].score) { document.getElementById('name-prompt').style.display = 'block'; } else { document.getElementById('name-prompt').style.display = 'none'; } if (!this.playerProgress[game]) this.playerProgress[game] = {}; const prevHighScore = this.playerProgress[game][song] || 0; if (score > prevHighScore) { this.playerProgress[game][song] = score; this.save(); } },
         submitScore() { const nameInput = document.getElementById('player-name-input'); const name = nameInput.value.toUpperCase() || 'AAA'; this.addScore(Game.state.activeGame, Game.state.currentSongId, name, Game.state.score); document.getElementById('name-prompt').style.display = 'none'; this.render(); nameInput.value = "AAA"; },
+        // 【安全性修正】使用 textContent 避免 XSS 攻擊
         render() {
             const game = Game.state.activeGame; const song = Game.state.currentSongId;
             const songTitle = SongData[game][song].title;
@@ -295,12 +300,11 @@
             if (scores.length === 0) { listEl.innerHTML = '<li>暫無記錄，快來爭奪第一！</li>'; }
             else {
                 scores.forEach((entry, index) => {
-                    // 【安全性修正】使用 textContent 避免 XSS 攻擊
                     const li = document.createElement('li');
                     const nameSpan = document.createElement('span');
-                    nameSpan.textContent = `#${index + 1} ${entry.name}`;
+                    nameSpan.textContent = `#${index + 1} ${entry.name}`; // 安全
                     const scoreSpan = document.createElement('span');
-                    scoreSpan.textContent = entry.score;
+                    scoreSpan.textContent = entry.score; // 安全
                     li.appendChild(nameSpan);
                     li.appendChild(scoreSpan);
                     listEl.appendChild(li);
@@ -313,6 +317,7 @@
     const SongSelection = { render() { const gameType = Game.state.activeGame; const titleMap = { timebeat: '時光節拍', conductor: '指揮樂章', turntable: '懷舊唱盤' }; document.getElementById('song-selection-title').textContent = titleMap[gameType] || '選擇曲目'; const songListContainer = document.getElementById('song-list'); songListContainer.innerHTML = ''; const playerProgress = Leaderboard.playerProgress; SongOrder[gameType].forEach((songId, index) => { const song = SongData[gameType][songId]; const prevSongId = index > 0 ? SongOrder[gameType][index - 1] : null; const isUnlocked = !prevSongId || (playerProgress[gameType] && (playerProgress[gameType][prevSongId] || 0) >= song.unlockScore); const songEl = document.createElement('div'); songEl.className = 'song-choice' + (isUnlocked ? '' : ' locked'); if (isUnlocked) { const highscore = (playerProgress[gameType] && playerProgress[gameType][songId]) ? `<div class="song-highscore">最高分: ${playerProgress[gameType][songId]}</div>` : ''; songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>${highscore}`; songEl.addEventListener('click', () => Game.startGame(songId)); } else { const prevSongTitle = SongData[gameType][prevSongId].title; songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div><div class="song-unlock-condition">完成《${prevSongTitle}》並獲得 ${song.unlockScore} 分</div><div class="lock-icon">🔒</div>`; } songListContainer.appendChild(songEl); }); } };
     
     // --- 遊戲邏輯模組 ---
+    // 【結構修正】確保所有模組的函數定義都在正確的位置
     const TimeBeat = {
         canvas: document.getElementById('timebeat-canvas'), ctx: null, notes: [], nextNoteIndex: 0,
         comboDisplay: document.querySelector('#timebeat-game-area .combo-display'),
@@ -360,7 +365,7 @@
                     if (timeDiff < -150) {
                         Game.state.hits.miss++;
                         this.resetCombo();
-                        return false; // Remove note
+                        return false;
                     }
                     return true;
                 }
@@ -370,35 +375,25 @@
         draw() {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             const numTracks = 3, trackWidth = this.canvas.width / numTracks, hitLineY = this.canvas.height * 0.85;
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; this.ctx.lineWidth = 2;
             for (let i = 1; i < numTracks; i++) { this.ctx.beginPath(); this.ctx.moveTo(trackWidth * i, 0); this.ctx.lineTo(trackWidth * i, this.canvas.height); this.ctx.stroke(); }
-            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.5)';
-            this.ctx.fillRect(0, hitLineY - 25, this.canvas.width, 50);
-            this.ctx.strokeStyle = 'gold';
-            this.ctx.lineWidth = 3;
-            this.ctx.strokeRect(0, hitLineY - 25, this.canvas.width, 50);
+            this.ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; this.ctx.fillRect(0, hitLineY - 25, this.canvas.width, 50);
+            this.ctx.strokeStyle = 'gold'; this.ctx.lineWidth = 3; this.ctx.strokeRect(0, hitLineY - 25, this.canvas.width, 50);
             this.notes.forEach(note => {
                 if (note.active && note.y > -50 && note.y < this.canvas.height) {
                     const x = trackWidth * note.track + trackWidth / 2;
                     const isStrong = note.type === 'strong';
                     const radius = isStrong ? trackWidth * 0.45 : trackWidth * 0.35;
-                    this.ctx.beginPath();
-                    this.ctx.arc(x, note.y, radius, 0, Math.PI * 2);
-                    this.ctx.fillStyle = isStrong ? 'orangered' : 'cyan';
-                    this.ctx.shadowColor = isStrong ? 'orangered' : 'cyan';
-                    this.ctx.shadowBlur = 15;
-                    this.ctx.fill();
-                    this.ctx.shadowBlur = 0;
+                    this.ctx.beginPath(); this.ctx.arc(x, note.y, radius, 0, Math.PI * 2);
+                    this.ctx.fillStyle = isStrong ? 'orangered' : 'cyan'; this.ctx.shadowColor = isStrong ? 'orangered' : 'cyan';
+                    this.ctx.shadowBlur = 15; this.ctx.fill(); this.ctx.shadowBlur = 0;
                 }
             });
         },
         handleTap(e) {
             if (!Game.state.startTime || !Game.state.isPlaying) return;
             const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const track = Math.floor(x / (this.canvas.width / 3));
-            const elapsedTime = performance.now() - Game.state.startTime;
+            const x = e.clientX - rect.left; const track = Math.floor(x / (this.canvas.width / 3)); const elapsedTime = performance.now() - Game.state.startTime;
             let judged = false;
             for (let i = 0; i < this.notes.length; i++) {
                 const note = this.notes[i];
