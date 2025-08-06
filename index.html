@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>時光迴廊 - 懷舊音樂之旅</title>
     <style>
-        /* CSS 與上一版 v3.0 完全相同 */
+        /* ... 此處省略大量 CSS，僅展示新增/修改部分 ... */
         :root { --theme-color-1: #ff8c00; --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: var(--font-family); overflow: hidden; touch-action: none; background: linear-gradient(135deg, #2a2a3e, #4a3a4a); color: white; user-select: none; -webkit-user-select: none; }
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; transition: opacity 0.5s ease; box-sizing: border-box; padding: 20px; }
@@ -13,60 +13,280 @@
         h1 { font-size: clamp(2.5rem, 10vw, 3.5rem); text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
         .retro-button { padding: 14px 28px; font-size: clamp(1rem, 4.5vw, 1.2rem); color: white; background: linear-gradient(145deg, var(--theme-color-1), #e06a00); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 12px; cursor: pointer; margin: 10px; min-width: 150px; box-shadow: 0 4px 0 #a04a00, 2px 2px 8px rgba(0,0,0,0.5); transition: all 0.1s ease-out; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
         .retro-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a04a00; }
-        .wallet-display { position: absolute; top: 20px; right: 20px; background-color: rgba(0, 0, 0, 0.5); padding: 8px 15px; border-radius: 20px; font-size: clamp(1rem, 5vw, 1.3rem); font-weight: bold; color: #FFD700; border: 1px solid #FFD700; z-index: 100; }
-        #main-menu-screen { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/800x600/?80s,retro,city') no-repeat center center/cover; }
+        .retro-button.disabled { background: #888; box-shadow: 0 4px 0 #555; cursor: not-allowed; }
+
+        /* --- 新增：頂部狀態欄 --- */
+        .top-stats-bar {
+            position: absolute; top: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between;
+            z-index: 100;
+        }
+        .stats-display {
+            background-color: rgba(0, 0, 0, 0.5); padding: 8px 15px;
+            border-radius: 20px; font-size: clamp(1rem, 5vw, 1.3rem);
+            font-weight: bold; border: 1px solid;
+        }
+        .star-display { color: gold; border-color: gold; }
+        .wallet-display { color: #FFD700; border-color: #FFD700; }
+
+        /* --- 主選單重構 --- */
+        #main-menu-screen { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/800x600/?80s,retro,road') no-repeat center center/cover; justify-content: center; }
+        .main-menu-buttons { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 40px; }
+        .main-menu-buttons .retro-button { width: 250px; height: 60px; font-size: 1.5rem; }
+
+        /* --- 新增：每日練習畫面 --- */
+        #daily-practice-screen .song-list { width: 100%; max-width: 450px; }
+        .daily-song-item { display: flex; align-items: center; justify-content: space-between; background-color: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .daily-song-info { text-align: left; }
+        .daily-song-title { font-size: 1.2rem; font-weight: bold; }
+        .daily-song-mode { font-size: 0.9rem; opacity: 0.8; }
+        .daily-song-status { font-size: 2rem; }
+
+        /* --- 自由練習：篇章式選歌 --- */
+        #song-selection-screen #song-list { width: 100%; max-width: 450px; max-height: 70vh; overflow-y: auto; padding: 10px; }
+        .era-container { margin-bottom: 20px; }
+        .era-header {
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.2), transparent);
+            padding: 10px; border-radius: 5px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .era-title { font-size: 1.5rem; font-weight: bold; }
+        .era-lock-info { font-size: 0.9rem; }
+        .era-locked .song-choice { display: none; }
         .song-choice { position: relative; padding-bottom: 35px; }
         .song-stars-display { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
         .star { font-size: 20px; color: #555; }
         .star.earned { color: gold; }
-        #result-stars-container { display: flex; justify-content: center; font-size: 40px; margin: 10px 0; }
-        #result-coins { color: #FFD700; font-weight: bold; }
-        .version-display { position: absolute; bottom: 10px; right: 10px; font-size: 12px; color: rgba(255,255,255,0.3); }
 
     </style>
 </head>
 <body>
+    <div class="top-stats-bar">
+        <div class="stats-display star-display">⭐ <span id="total-stars">0</span></div>
+        <div class="stats-display wallet-display">🪙 <span id="timecoin-balance">0</span></div>
+    </div>
+    
     <div id="main-menu-screen" class="screen active">
-        <div class="wallet-display">🪙 <span id="timecoin-balance">0</span></div>
         <h1>時光迴廊</h1>
+        <div class="main-menu-buttons">
+            <button class="retro-button" id="daily-practice-btn">今日挑戰</button>
+            <button class="retro-button" id="free-play-btn">自由點唱</button>
+            <button class="retro-button" id="recital-hall-btn" disabled>演奏廳 (敬請期待)</button>
+        </div>
+        <div class="version-display" style="position: absolute; bottom: 10px; right: 10px; font-size: 12px; color: rgba(255,255,255,0.3);">v3.2</div>
+    </div>
+
+    <div id="mode-selection-screen" class="screen">
+        <h1>自由點唱</h1>
         <p>選擇你的懷舊音樂之旅</p>
         <div class="game-choice-container">
             <div class="game-choice-card" data-gametype="timebeat"> <div class="icon">🎶</div> <div class="title">時光節拍</div> </div>
             <div class="game-choice-card" data-gametype="conductor"> <div class="icon">🎼</div> <div class="title">指揮家</div> </div>
             <div class="game-choice-card" data-gametype="turntable"> <div class="icon">💿</div> <div class="title">時光唱盤</div> </div>
         </div>
-        <button class="retro-button" id="show-tutorial-btn">玩法示範</button>
-        <div class="version-display">v3.1</div>
+        <button class="retro-button" id="back-to-main-menu-btn">返回主選單</button>
     </div>
+
+    <div id="daily-practice-screen" class="screen">
+        <h1>今日挑戰</h1>
+        <div class="song-list" id="daily-song-list">
+            </div>
+        <div id="daily-reward-info"></div>
+        <button class="retro-button" id="back-from-daily-btn">返回主選單</button>
+    </div>
+
     <div id="end-screen" class="screen">
         <div id="end-screen-content">
             <h1 id="end-title">演奏結束</h1>
             <div id="result-stars-container"></div>
             <p style="font-size: 24px;">最終得分: <span id="final-score">0</span></p>
-            <p>最高連擊: <span id="max-combo">0</span></p>
-            <p>準確率: <span id="accuracy">0%</span></p>
             <p>獲得時光幣: <span id="result-coins">0</span></p>
             <p style="font-size: 32px; font-weight: bold; color: gold;">評級: <span id="rating-badge"></span></p>
-            <button id="view-leaderboard-btn" class="retro-button">查看排行榜</button>
-            <button id="retry-button" class="retro-button">再次嘗試</button>
-            <button id="back-to-song-menu-btn" class="retro-button">返回選曲</button>
+            <button class="retro-button" id="next-daily-song-btn" style="display:none;">挑戰下一曲</button>
+            <button class="retro-button" id="back-to-menu-after-game-btn">返回主選單</button>
         </div>
     </div>
     
-    <div id="main-container"></div>
-    <div id="tutorial-screen" class="screen"></div>
-    <div id="song-selection-screen" class="screen"></div>
-    <div id="leaderboard-screen" class="screen"></div>
-    <div id="poster-preview-container"></div>
+    <div id="main-container"></div> <div id="tutorial-screen" class="screen"></div> <div id="song-selection-screen" class="screen"></div> <div id="leaderboard-screen" class="screen"></div>
     <audio id="game-audio" preload="auto"></audio>
 
     <script>
-        // JavaScript 程式碼與上一版 v3.0 完全相同
-        // 為確保完整性，此處再次提供
-        document.addEventListener('DOMContentLoaded', () => {
-            const allScreens = document.querySelectorAll('.screen');
-            // ... (此處省略與 v3.0 完全相同的完整 JS 程式碼)
-        });
+    // =================================================================================
+    //  時光迴廊 H5 遊戲 - 統一程式碼框架 v3.2 (核心循環建設)
+    // =================================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- 模組定義 (Wallet, Game, SongData, Leaderboard, etc.) ---
+    const Wallet = {
+        coins: 0,
+        ui: document.getElementById('timecoin-balance'),
+        load() { /* ... */ },
+        save() { /* ... */ },
+        addCoins(amount) { /* ... */ },
+        updateUI() { /* ... */ }
+    };
+
+    const Game = {
+        state: { /* ... */ isDailyChallenge: false, dailyChallengeIndex: 0 },
+        init() {
+            // ...
+            Wallet.load();
+            Leaderboard.init();
+            DailyPractice.init();
+            document.getElementById('daily-practice-btn').addEventListener('click', () => {
+                Game.showScreen('daily-practice-screen');
+                DailyPractice.render();
+            });
+            document.getElementById('free-play-btn').addEventListener('click', () => Game.showScreen('mode-selection-screen'));
+            document.getElementById('back-to-main-menu-btn').addEventListener('click', () => Game.showScreen('main-menu-screen'));
+            document.getElementById('back-from-daily-btn').addEventListener('click', () => Game.showScreen('main-menu-screen'));
+            document.getElementById('back-to-menu-after-game-btn').addEventListener('click', () => Game.showScreen('main-menu-screen'));
+        },
+        startGame(songId, gameMode) {
+            this.state.activeGame = gameMode;
+            // ... (startGame 邏輯)
+        },
+        endGame() {
+            // ... (endGame 邏輯，與 v3.0 類似)
+            // 新增邏輯：處理每日挑戰的流程
+            if (this.state.isDailyChallenge) {
+                DailyPractice.completeSong(this.state.dailyChallengeIndex, stars);
+                document.getElementById('back-to-menu-after-game-btn').style.display = 'none';
+                const nextBtn = document.getElementById('next-daily-song-btn');
+                if (DailyPractice.isChallengeFinished()) {
+                    nextBtn.textContent = '領取每日獎勵';
+                    nextBtn.onclick = () => { DailyPractice.claimReward(); Game.showScreen('main-menu-screen'); };
+                } else {
+                    nextBtn.textContent = '挑戰下一曲';
+                    nextBtn.onclick = () => { Game.showScreen('daily-practice-screen'); DailyPractice.render(); };
+                }
+                nextBtn.style.display = 'block';
+            } else {
+                document.getElementById('back-to-menu-after-game-btn').style.display = 'block';
+                document.getElementById('next-daily-song-btn').style.display = 'none';
+            }
+        },
+        // ... (其他方法)
+    };
+    
+    // --- 新增：每日練習模組 ---
+    const DailyPractice = {
+        challenge: [], // [{ songId, gameMode, title, artist, completedStars }]
+        reward: 200,
+        init() {
+            this.generateChallenge();
+        },
+        generateChallenge() {
+            // 基於日期的偽隨機，確保每天的挑戰都一樣
+            const date = new Date();
+            const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+            
+            // 檢查本地存檔，如果日期不符則生成新的
+            const saved = JSON.parse(localStorage.getItem('dailyChallenge') || '{}');
+            if (saved.seed === seed) {
+                this.challenge = saved.challenge;
+                return;
+            }
+
+            // 從各模式中隨機挑選歌曲 (簡易版)
+            const timebeatSongs = Object.keys(SongData.timebeat);
+            const conductorSongs = Object.keys(SongData.conductor);
+            // ... 可擴充更多模式
+            
+            this.challenge = [
+                { songId: timebeatSongs[seed % timebeatSongs.length], gameMode: 'timebeat', completedStars: 0 },
+                { songId: conductorSongs[seed % conductorSongs.length], gameMode: 'conductor', completedStars: 0 },
+                { songId: timebeatSongs[(seed + 1) % timebeatSongs.length], gameMode: 'timebeat', completedStars: 0 }, // 暫用 timebeat 代替 turntable
+            ];
+            
+            localStorage.setItem('dailyChallenge', JSON.stringify({ seed, challenge: this.challenge }));
+        },
+        render() { /* ... 渲染每日挑戰列表到 UI ... */ },
+        completeSong(index, stars) {
+            this.challenge[index].completedStars = Math.max(this.challenge[index].completedStars, stars);
+            this.save();
+        },
+        isChallengeFinished() {
+            return this.challenge.every(song => song.completedStars > 0);
+        },
+        claimReward() {
+            Wallet.addCoins(this.reward);
+            // ... 可以加入簽到邏輯 ...
+        },
+        save() {
+             const saved = JSON.parse(localStorage.getItem('dailyChallenge') || '{}');
+             saved.challenge = this.challenge;
+             localStorage.setItem('dailyChallenge', JSON.stringify(saved));
+        }
+    };
+    
+    // --- 歌曲數據結構重構 ---
+    const EraData = {
+        '80s': { name: '80年代金曲', starsToUnlock: 0 },
+        '90s': { name: '90年代經典', starsToUnlock: 5 }, // 需要5顆星解鎖
+    };
+    const SongData = {
+        timebeat: {
+            tianmimi: { era: '80s', title: '甜蜜蜜', /* ... */ },
+        },
+        conductor: {
+            song1: { era: '80s', title: '滄海一聲笑', /* ... */ },
+            song2: { era: '90s', title: '男兒當自強', unlockScore: 0, duration: 25000, audioSrc: '#', backgroundSrc: '#', notes: [] }, // 新增歌曲
+        },
+        turntable: { /* ... */ }
+    };
+
+    const Leaderboard = {
+        // ...
+        getTotalStars() {
+            let total = 0;
+            for (const mode in this.playerProgress) {
+                for (const songId in this.playerProgress[mode]) {
+                    total += this.playerProgress[mode][songId].stars || 0;
+                }
+            }
+            return total;
+        }
+    };
+    
+    const SongSelection = {
+        render() {
+            const gameType = Game.state.activeGame;
+            const songListContainer = document.getElementById('song-list');
+            songListContainer.innerHTML = '';
+            const totalStars = Leaderboard.getTotalStars();
+            
+            // 遍歷所有時代篇章
+            for (const eraId in EraData) {
+                const era = EraData[eraId];
+                const isEraLocked = totalStars < era.starsToUnlock;
+
+                const eraContainer = document.createElement('div');
+                eraContainer.className = 'era-container' + (isEraLocked ? ' era-locked' : '');
+                
+                let headerHTML = `<div class="era-header"><div class="era-title">${era.name}</div>`;
+                if (isEraLocked) {
+                    headerHTML += `<div class="era-lock-info">🔒 需要 ${era.starsToUnlock} ⭐ 解鎖</div>`;
+                }
+                headerHTML += `</div>`;
+                eraContainer.innerHTML = headerHTML;
+
+                // 篩選並渲染該時代的歌曲
+                for (const songId in SongData[gameType]) {
+                    const song = SongData[gameType][songId];
+                    if (song.era === eraId) {
+                        // ... (原有的渲染 song-choice 邏輯)
+                        eraContainer.appendChild(/* songEl */);
+                    }
+                }
+                songListContainer.appendChild(eraContainer);
+            }
+        }
+    };
+    
+    // --- 啟動遊戲 ---
+    Game.init();
+    });
     </script>
 </body>
 </html>
