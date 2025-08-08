@@ -12,164 +12,89 @@
         h1 { font-size: clamp(2.5rem, 10vw, 3.5rem); text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
         .retro-button { padding: 14px 28px; font-size: clamp(1rem, 4.5vw, 1.2rem); color: white; background: linear-gradient(145deg, var(--theme-color-1), #e06a00); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 12px; cursor: pointer; margin: 10px; min-width: 150px; box-shadow: 0 4px 0 #a04a00, 2px 2px 8px rgba(0,0,0,0.5); transition: all 0.1s ease-out; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
         .retro-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a04a00; }
-        .retro-button.disabled { background: #888; box-shadow: 0 4px 0 #555; cursor: not-allowed; opacity: 0.6; }
-        .top-stats-bar { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 100; pointer-events: none; }
-        .stats-display { background-color: rgba(0, 0, 0, 0.5); padding: 8px 15px; border-radius: 20px; font-size: clamp(1rem, 5vw, 1.3rem); font-weight: bold; border: 1px solid; pointer-events: auto; }
-        .star-display { color: gold; border-color: gold; }
-        .wallet-display { color: #FFD700; border-color: #FFD700; }
         #main-menu-screen { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/800x600/?80s,retro,road') no-repeat center center/cover; justify-content: center; }
         .main-menu-buttons { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 40px; }
         .main-menu-buttons .retro-button { width: 280px; height: 70px; font-size: 1.8rem; }
         .version-display { position: absolute; bottom: 10px; right: 10px; font-size: 12px; color: rgba(255,255,255,0.3); }
-        .game-choice-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; }
-        .game-choice-card { width: clamp(130px, 35vw, 160px); height: clamp(180px, 48vw, 220px); margin: 10px; border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 12px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
-        .game-choice-card .icon { font-size: clamp(3rem, 15vw, 4rem); }
-        .game-choice-card .title { font-size: clamp(1.2rem, 5vw, 1.5rem); margin-top: 15px; font-weight: bold; }
-        #challenge-hub-screen, #recital-hall-screen, #daily-practice-screen, #song-selection-screen, #mode-selection-screen { justify-content: flex-start; padding-top: 80px; }
-        .challenge-panel { background-color: rgba(0,0,0,0.3); border: 2px solid var(--theme-color-1); border-radius: 15px; padding: 20px; width: 100%; max-width: 450px; margin-bottom: 25px; text-align: left; }
-        .challenge-panel h2 { font-size: 1.8rem; margin: 0 0 10px; }
-        .challenge-panel p { margin: 5px 0 15px; opacity: 0.8; }
-        #challenge-info-panel { text-align: center; }
-        .leaderboard-container, .song-list { width: 100%; max-width: 450px; flex-grow: 1; overflow-y: auto; }
-        .daily-song-item { display: flex; align-items: center; justify-content: space-between; background-color: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px; }
-        .daily-song-item.completed { border-color: gold; }
-        .daily-song-info { text-align: left; flex-grow: 1; }
-        .daily-song-title { font-size: 1.2rem; font-weight: bold; }
-        .daily-song-mode { font-size: 0.9rem; opacity: 0.8; }
-        .daily-song-status { font-size: 1.5rem; color: gold; margin-left: 15px; }
-        .daily-reward-panel { text-align: center; width: 100%; max-width: 450px; margin-bottom: 15px; }
-        .era-container { margin-bottom: 20px; }
-        .era-header { background: linear-gradient(90deg, transparent, rgba(255,215,0,0.2), transparent); padding: 10px; border-radius: 5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .era-title { font-size: 1.5rem; font-weight: bold; }
-        .era-lock-info { font-size: 0.9rem; }
-        .era-locked .song-choice { display: none; }
-        .song-choice { background-color: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s; position: relative; padding-bottom: 35px; text-align: left; }
-        .song-title { font-size: clamp(1.1rem, 5vw, 1.3rem); font-weight: bold; }
-        .song-artist { font-size: clamp(0.8rem, 3.5vw, 1rem); opacity: 0.8; margin-top: 5px; }
-        .song-highscore { font-size: clamp(0.7rem, 3vw, 0.9rem); color: var(--theme-color-1); position: absolute; right: 15px; top: 15px;}
-        .song-stars-display { position: absolute; bottom: 10px; left: 15px; display: flex; gap: 5px; }
-        .star { font-size: 20px; color: #555; }
-        .star.earned { color: gold; }
+        #challenge-hub-screen, #mode-selection-screen { justify-content: flex-start; padding-top: 80px; }
     </style>
 </head>
 <body>
-    <div class="top-stats-bar"></div>
-    <div id="main-menu-screen" class="screen active"></div>
-    <div id="challenge-hub-screen" class="screen"></div>
-    <div id="mode-selection-screen" class="screen"></div>
-    <div id="recital-hall-screen" class="screen"></div>
-    <div id="daily-practice-screen" class="screen"></div>
-    <div id="song-selection-screen" class="screen"></div>
-    <div id="end-screen" class="screen"></div>
-    <div id="main-container"></div>
-    <audio id="game-audio" preload="auto"></audio>
+    <div id="main-menu-screen" class="screen active">
+        <h1>時光迴廊</h1>
+        <div class="main-menu-buttons">
+            <button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button>
+            <button class="retro-button" id="start-free-play-btn">自由點唱</button>
+        </div>
+        <div class="version-display">v7.0</div>
+    </div>
+    <div id="challenge-hub-screen" class="screen">
+        <h1>挑戰中心</h1>
+        <button class="retro-button" id="back-to-main-from-hub-btn">返回主選單</button>
+    </div>
+    <div id="mode-selection-screen" class="screen">
+        <h1>自由點唱</h1>
+        <button class="retro-button" id="back-to-main-from-mode-btn">返回主選單</button>
+    </div>
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - v5.5 (最終完整功能版)
+    //  時光迴廊 H5 遊戲 - v7.0 (核心啟動穩定版)
     // =================================================================================
     document.addEventListener('DOMContentLoaded', () => {
 
-    const allScreens = document.querySelectorAll('.screen');
-    
-    // 完整、正確的模組定義 (無任何省略)
-    const Game = {
-        state: { /* ... */ },
-        init() {
-            Wallet.load();
-            Leaderboard.init();
-            RecitalHall.init();
-            DailyPractice.init();
+        // --- 1. 獲取所有需要的 HTML 元素 ---
+        const allScreens = document.querySelectorAll('.screen');
+        const mainMenuScreen = document.getElementById('main-menu-screen');
+        const challengeHubScreen = document.getElementById('challenge-hub-screen');
+        const modeSelectionScreen = document.getElementById('mode-selection-screen');
 
-            // 主選單
-            document.getElementById('start-challenge-hub-btn').addEventListener('click', () => Game.showScreen('challenge-hub-screen'));
-            document.getElementById('start-free-play-btn').addEventListener('click', () => Game.showScreen('mode-selection-screen'));
-            
-            // 挑戰中心
-            document.getElementById('goto-daily-practice-btn').addEventListener('click', () => { Game.showScreen('daily-practice-screen'); DailyPractice.render(); });
-            document.getElementById('goto-recital-hall-btn').addEventListener('click', () => { Game.showScreen('recital-hall-screen'); RecitalHall.render(); });
-            document.getElementById('back-to-main-from-hub-btn').addEventListener('click', () => Game.showScreen('main-menu-screen'));
-            
-            // 模式選擇
-            document.getElementById('back-to-main-from-mode-btn').addEventListener('click', () => Game.showScreen('main-menu-screen'));
-            document.querySelectorAll('#mode-selection-screen .game-choice-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    Game.state.activeGame = card.dataset.gametype;
-                    Game.showScreen('song-selection-screen');
-                    SongSelection.render();
-                });
+        const startChallengeBtn = document.getElementById('start-challenge-hub-btn');
+        const startFreePlayBtn = document.getElementById('start-free-play-btn');
+        const backFromHubBtn = document.getElementById('back-to-main-from-hub-btn');
+        const backFromModeBtn = document.getElementById('back-to-main-from-mode-btn');
+
+        // --- 2. 核心功能：畫面切換 ---
+        function showScreen(screenId) {
+            allScreens.forEach(s => {
+                s.classList.remove('active');
             });
-
-            // 歌曲選擇
-            document.getElementById('back-to-mode-select-btn').addEventListener('click', () => Game.showScreen('mode-selection-screen'));
-
-            // 每日挑戰
-            document.getElementById('back-from-daily-btn').addEventListener('click', () => Game.showScreen('challenge-hub-screen'));
-
-            // 演奏廳
-            document.getElementById('back-from-recital-btn').addEventListener('click', () => Game.showScreen('challenge-hub-screen'));
-        },
-        showScreen(screenId) {
-            allScreens.forEach(s => s.classList.remove('active'));
             const activeScreen = document.getElementById(screenId);
-            if(activeScreen) activeScreen.classList.add('active');
-        },
-        // ... 其他 Game 方法的完整實現
-    };
-    
-    const SongSelection = {
-        render() {
-            const gameType = Game.state.activeGame;
-            const songListContainer = document.getElementById('song-list');
-            songListContainer.innerHTML = '';
-            const totalStars = Leaderboard.getTotalStars();
-            
-            const titleMap = { timebeat: '時光節拍', conductor: '指揮家', turntable: '時光唱盤' };
-            document.getElementById('song-selection-title').textContent = titleMap[gameType] || "選擇曲目";
-            
-            for (const eraId in EraData) {
-                const era = EraData[eraId];
-                const isEraLocked = totalStars < era.starsToUnlock;
-
-                const eraContainer = document.createElement('div');
-                eraContainer.className = 'era-container' + (isEraLocked ? ' era-locked' : '');
-                
-                let headerHTML = `<div class="era-header"><div class="era-title">${era.name}</div>`;
-                if (isEraLocked) {
-                    headerHTML += `<div class="era-lock-info">🔒 需要 ${era.starsToUnlock} ⭐ 解鎖</div>`;
-                }
-                headerHTML += `</div>`;
-                eraContainer.innerHTML = headerHTML;
-
-                for (const songId in SongData[gameType]) {
-                    const song = SongData[gameType][songId];
-                    if (song.era === eraId) {
-                        const progress = Leaderboard.playerProgress[gameType]?.[songId];
-                        const highscore = progress?.score ? `<div class="song-highscore">最高分: ${progress.score}</div>` : '';
-                        let starsHTML = '<div class="song-stars-display">';
-                        const savedStars = progress?.stars || 0;
-                        for(let i = 0; i < 3; i++) {
-                            starsHTML += `<span class="star ${i < savedStars ? 'earned' : ''}">★</span>`;
-                        }
-                        starsHTML += '</div>';
-
-                        const songEl = document.createElement('div');
-                        songEl.className = 'song-choice';
-                        songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>${highscore}${starsHTML}`;
-                        songEl.addEventListener('click', () => Game.startGame(songId, gameType));
-                        eraContainer.appendChild(songEl);
-                    }
-                }
-                songListContainer.appendChild(eraContainer);
+            if (activeScreen) {
+                activeScreen.classList.add('active');
             }
         }
-    };
 
-    // 其他所有模組的完整實現
-    // ... Wallet, Leaderboard, RecitalHall, DailyPractice, TimeBeat, Conductor, Turntable, SongData, EraData ...
+        // --- 3. 綁定所有按鈕的點擊事件 ---
+        if (startChallengeBtn) {
+            startChallengeBtn.addEventListener('click', () => {
+                showScreen('challenge-hub-screen');
+            });
+        }
+        
+        if (startFreePlayBtn) {
+            startFreePlayBtn.addEventListener('click', () => {
+                showScreen('mode-selection-screen');
+            });
+        }
 
-    // --- 啟動遊戲 ---
-    Game.init();
+        if (backFromHubBtn) {
+            backFromHubBtn.addEventListener('click', () => {
+                showScreen('main-menu-screen');
+            });
+        }
+
+        if (backFromModeBtn) {
+            backFromModeBtn.addEventListener('click', () => {
+                showScreen('main-menu-screen');
+            });
+        }
+
+        // --- 4. 初始化 ---
+        // 初始顯示主選單
+        showScreen('main-menu-screen');
+        console.log("遊戲核心 v7.0 已成功啟動！");
+
     });
     </script>
 </body>
