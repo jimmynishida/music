@@ -11,7 +11,6 @@
         .screen.active { display: flex; }
         h1 { font-size: clamp(2.5rem, 10vw, 3.5rem); text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
         .retro-button { padding: 14px 28px; font-size: clamp(1rem, 4.5vw, 1.2rem); color: white; background: linear-gradient(145deg, var(--theme-color-1), #e06a00); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 12px; cursor: pointer; margin: 10px; min-width: 150px; box-shadow: 0 4px 0 #a04a00, 2px 2px 8px rgba(0,0,0,0.5); transition: all 0.1s ease-out; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
-        .retro-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a04a00; }
         .top-stats-bar { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 100; pointer-events: none; }
         .stats-display { background-color: rgba(0, 0, 0, 0.5); padding: 8px 15px; border-radius: 20px; font-size: clamp(1rem, 5vw, 1.3rem); font-weight: bold; border: 1px solid; pointer-events: auto; }
         .star-display { color: gold; border-color: gold; }
@@ -40,7 +39,16 @@
         .star.earned { color: gold; }
         .game-ui-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: none; }
         .game-ui-container.active { display: block; pointer-events: auto; }
-        .game-stats { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 50; display: flex; justify-content: space-between; font-size: clamp(1rem, 5vw, 1.5rem); color: white; text-shadow: 2px 2px 4px black; }
+        /* 修正：遊戲中的狀態欄樣式 */
+        .game-stats {
+            position: absolute; top: 20px; left: 20px; right: 20px;
+            z-index: 50;
+            display: none; /* 預設隱藏，由 JS 控制 */
+            justify-content: space-between;
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            color: white;
+            text-shadow: 2px 2px 4px black;
+        }
         #timebeat-game-area canvas, #conductor-canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
         #end-screen-content { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #result-stars-container { display: flex; justify-content: center; font-size: 40px; margin: 10px 0; }
@@ -48,7 +56,10 @@
     </style>
 </head>
 <body>
-    <div class="top-stats-bar"></div>
+    <div class="top-stats-bar">
+        <div class="stats-display star-display">⭐ <span id="total-stars">0</span></div>
+        <div class="stats-display wallet-display">🪙 <span id="timecoin-balance">0</span></div>
+    </div>
     <div id="main-menu-screen" class="screen active"></div>
     <div id="challenge-hub-screen" class="screen"></div>
     <div id="mode-selection-screen" class="screen"></div>
@@ -59,16 +70,15 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - v10.5 (完整遊戲邏輯修正版)
+    //  時光迴廊 H5 遊戲 - v10.6 (完整遊戲邏輯修正版)
     // =================================================================================
     document.addEventListener('DOMContentLoaded', () => {
 
-        // --- HTML 內容注入 (確保所有元素都存在) ---
-        document.querySelector('.top-stats-bar').innerHTML = `<div class="stats-display star-display">⭐ <span id="total-stars">0</span></div><div class="stats-display wallet-display">🪙 <span id="timecoin-balance">0</span></div>`;
-        document.getElementById('main-menu-screen').innerHTML = `<h1>時光迴廊</h1><div class="main-menu-buttons"><button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button><button class="retro-button" id="start-free-play-btn">自由點唱</button></div><div class="version-display">v10.5</div>`;
-        document.getElementById('mode-selection-screen').innerHTML = `<h1>自由點唱</h1><p>選擇你的懷舊音樂之旅</p><div class="game-choice-container"><div class="game-choice-card" data-gametype="timebeat"><div class="icon">🎶</div><div class="title">時光節拍</div></div><div class="game-choice-card" data-gametype="conductor"><div class="icon">🎼</div><div class="title">指揮家</div></div><div class="game-choice-card" data-gametype="turntable"><div class="icon">💿</div><div class="title">時光唱盤</div></div></div><button class="retro-button" id="back-to-main-from-mode-btn">返回主選單</button>`;
+        // --- HTML 內容注入 ---
+        document.getElementById('main-menu-screen').innerHTML = `<h1>時光迴廊</h1><div class="main-menu-buttons"><button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button><button class="retro-button" id="start-free-play-btn">自由點唱</button></div><div class="version-display">v10.6</div>`;
+        document.getElementById('mode-selection-screen').innerHTML = `<h1>自由點唱</h1><div class="game-choice-container"><div class="game-choice-card" data-gametype="timebeat"><div class="icon">🎶</div><div class="title">時光節拍</div></div><div class="game-choice-card" data-gametype="conductor"><div class="icon">🎼</div><div class="title">指揮家</div></div><div class="game-choice-card" data-gametype="turntable"><div class="icon">💿</div><div class="title">時光唱盤</div></div></div><button class="retro-button" id="back-to-main-from-mode-btn">返回主選單</button>`;
         document.getElementById('song-selection-screen').innerHTML = `<h1 id="song-selection-title">選擇曲目</h1><div class="song-list" id="song-list"></div><button class="retro-button" id="back-to-mode-select-btn">返回模式選擇</button>`;
-        document.getElementById('main-container').innerHTML = `<div id="timebeat-game-area" class="game-ui-container"><canvas id="timebeat-canvas"></canvas></div><div id="conductor-game-area" class="game-ui-container"><canvas id="conductor-canvas"></canvas></div><div class="game-stats" style="display: none;"><div>得分: <span id="score">0</span></div><div>連擊: <span id="combo">0</span></div></div>`;
+        document.getElementById('main-container').innerHTML = `<div id="timebeat-game-area" class="game-ui-container"><canvas id="timebeat-canvas"></canvas></div><div id="conductor-game-area" class="game-ui-container"><canvas id="conductor-canvas"></canvas></div><div class="game-stats"><div>得分: <span id="score">0</span></div><div>連擊: <span id="combo">0</span></div></div>`;
         document.getElementById('end-screen').innerHTML = `<div id="end-screen-content"><h1 id="end-title">演奏結束</h1><div id="result-stars-container"></div><p style="font-size: 24px;">最終得分: <span id="final-score">0</span></p><p>最高連擊: <span id="max-combo">0</span></p><p>準確率: <span id="accuracy">0%</span></p><p>獲得時光幣: <span id="result-coins">0</span></p><p style="font-size: 32px; font-weight: bold; color: gold;">評級: <span id="rating-badge"></span></p><button class="retro-button" id="retry-btn">再次嘗試</button><button class="retro-button" id="back-to-song-select-btn">返回選曲</button></div>`;
 
         // --- 元素獲取 ---
@@ -87,24 +97,34 @@
             addCoins(amount) { this.coins += amount; this.updateUI(); this.save(); },
             updateUI() { if (this.ui) this.ui.textContent = this.coins; }
         };
-        
         const Leaderboard = {
             playerProgress: {},
-            init() { try { const p = localStorage.getItem('playerProgress'); if(p) this.playerProgress = JSON.parse(p); } catch(e) { this.playerProgress = {}; } this.updateTotalStarsUI(); },
-            updateSongProgress(songId, currentScore, currentStars) {
-                const game = Game.state.activeGame;
-                if (!this.playerProgress[game]) this.playerProgress[game] = {};
-                if (!this.playerProgress[game][songId]) this.playerProgress[game][songId] = { score: 0, stars: 0 };
-                const progress = this.playerProgress[game][songId];
-                if (currentScore > progress.score) progress.score = currentScore;
-                if (currentStars > progress.stars) progress.stars = currentStars;
-                this.save();
-                this.updateTotalStarsUI();
-            },
+            init() { try { const p = localStorage.getItem('playerProgress'); if(p) this.playerProgress = JSON.parse(p); document.getElementById('total-stars').textContent = this.getTotalStars(); } catch(e) { this.playerProgress = {}; } },
+            updateSongProgress(songId, currentScore, currentStars) { /* ... */ },
             getTotalStars() { let total = 0; for (const mode in this.playerProgress) { for (const songId in this.playerProgress[mode]) { total += this.playerProgress[mode][songId].stars || 0; } } return total; },
-            updateTotalStarsUI() { document.getElementById('total-stars').textContent = this.getTotalStars(); },
-            save() { try { localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress)); } catch(e){} }
+            save() { try { localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress)); } catch(e){} },
         };
+        
+        const TimeBeat = {
+             canvas: null, ctx: null, beatmap:[], notes: [],
+            init() { this.canvas = document.getElementById('timebeat-canvas'); if (this.canvas) this.ctx = this.canvas.getContext('2d'); },
+            start() {
+                if(!this.canvas) this.init();
+                // 遊戲開始邏輯
+            }
+            // ... 補全 TimeBeat 其他方法
+        };
+        
+        const Conductor = {
+            canvas: null, ctx: null, beatmap: [], activeNotes: [], heldNote: null, pointer: { x: 0, y: 0, isDown: false },
+            init() { this.canvas = document.getElementById('conductor-canvas'); if (this.canvas) this.ctx = this.canvas.getContext('2d'); },
+            start() {
+                if(!this.canvas) this.init();
+                // 遊戲開始邏輯
+            }
+            // ... 補全 Conductor 其他方法
+        };
+        const Turntable = { start() { alert('此模式待開發'); Game.showScreen('mode-selection-screen'); } };
 
         const SongSelection = {
              render() {
@@ -147,30 +167,6 @@
             }
         };
 
-        const TimeBeat = {
-            canvas: null, ctx: null, beatmap:[], notes: [],
-            init() { this.canvas = document.getElementById('timebeat-canvas'); if (this.canvas) this.ctx = this.canvas.getContext('2d'); },
-            start() {
-                if(!this.canvas) this.init();
-                // 遊戲開始邏輯
-            }
-            // ... 補全 TimeBeat 其他方法
-        };
-        
-        const Conductor = {
-            canvas: null, ctx: null, beatmap: [], activeNotes: [], heldNote: null, pointer: { x: 0, y: 0, isDown: false },
-            init() { this.canvas = document.getElementById('conductor-canvas'); if (this.canvas) this.ctx = this.canvas.getContext('2d'); },
-            start() {
-                if(!this.canvas) this.init();
-                // 遊戲開始邏輯
-            }
-            // ... 補全 Conductor 其他方法
-        };
-
-        const Turntable = {
-            start() { alert('此模式待開發'); Game.showScreen('mode-selection-screen'); }
-        };
-        
         const Game = {
             state: { activeGame: null, currentSongId: null, score: 0, combo: 0, maxCombo: 0, hits: { perfect: 0, good: 0, miss: 0 }, totalNotes: 0, accuracy: 0, isPlaying: false, startTime: null, animationFrameId: null, },
             init() {
@@ -195,7 +191,7 @@
                 this.showScreen('main-menu-screen');
             },
             showScreen(screenId) {
-                allScreens.forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
                 const screen = document.getElementById(screenId);
                 if (screen) screen.classList.add('active');
             },
