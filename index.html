@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>時光迴廊 - 懷舊音樂之旅</title>
     <style>
-        /* CSS 樣式與 v12.2 完全相同 */
         :root { --theme-color-1: #ff8c00; --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: var(--font-family); overflow: hidden; touch-action: none; background: linear-gradient(135deg, #2a2a3e, #4a3a4a); color: white; user-select: none; -webkit-user-select: none; }
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; transition: opacity 0.5s ease; box-sizing: border-box; padding: 20px; }
@@ -51,13 +50,13 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - v12.3 (歌曲數據修正版)
+    //  時光迴廊 H5 遊戲 - v12.4 (歌曲數據修正版)
     // =================================================================================
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- HTML 內容注入 ---
         document.querySelector('.top-stats-bar').innerHTML = `<div class="stats-display star-display">⭐ <span id="total-stars">0</span></div><div class="stats-display wallet-display">🪙 <span id="timecoin-balance">0</span></div>`;
-        document.getElementById('main-menu-screen').innerHTML = `<h1>時光迴廊</h1><div class="main-menu-buttons"><button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button><button class="retro-button" id="start-free-play-btn">自由點唱</button></div><div class="version-display">v12.3</div>`;
+        document.getElementById('main-menu-screen').innerHTML = `<h1>時光迴廊</h1><div class="main-menu-buttons"><button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button><button class="retro-button" id="start-free-play-btn">自由點唱</button></div><div class="version-display">v12.4</div>`;
         document.getElementById('mode-selection-screen').innerHTML = `<h1>自由點唱</h1><p>選擇你的懷舊音樂之旅</p><div class="game-choice-container"><div class="game-choice-card" data-gametype="timebeat"><div class="icon">🎶</div><div class="title">時光節拍</div></div><div class="game-choice-card" data-gametype="conductor"><div class="icon">🎼</div><div class="title">指揮家</div></div><div class="game-choice-card" data-gametype="turntable"><div class="icon">💿</div><div class="title">時光唱盤</div></div></div><button class="retro-button" id="back-to-main-from-mode-btn">返回主選單</button>`;
         document.getElementById('song-selection-screen').innerHTML = `<h1 id="song-selection-title">選擇曲目</h1><div class="song-list" id="song-list"></div><button class="retro-button" id="back-to-mode-select-btn">返回模式選擇</button>`;
         document.getElementById('main-container').innerHTML = `<div id="timebeat-game-area" class="game-ui-container"><canvas id="timebeat-canvas"></canvas></div><div id="conductor-game-area" class="game-ui-container"><canvas id="conductor-canvas"></canvas></div><div class="game-stats"><div>得分: <span id="score">0</span></div><div>連擊: <span id="combo">0</span></div></div>`;
@@ -108,6 +107,7 @@
             updateTotalStarsUI() { document.getElementById('total-stars').textContent = this.getTotalStars(); },
             save() { try { localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress)); } catch(e){} }
         };
+        
         const SongSelection = {
              render() {
                 const gameType = Game.state.activeGame;
@@ -150,7 +150,7 @@
         };
 
         const TimeBeat = {
-            canvas: null, ctx: null, beatmap:[], notes: [],
+            canvas: null, ctx: null, beatmap:[], notes: [], nextNoteIndex: 0,
             init() { this.canvas = document.getElementById('timebeat-canvas'); if (this.canvas) this.ctx = this.canvas.getContext('2d'); },
             start() {
                 if(!this.canvas) this.init();
@@ -158,6 +158,8 @@
                 this.canvas.addEventListener('pointerdown', this.handleTap.bind(this));
                 const song = SongData.timebeat[Game.state.currentSongId];
                 this.notes = [];
+                this.nextNoteIndex = 0;
+                
                 let trackCounter = 0;
                 const trackPattern = [0, 1, 2, 1]; 
                 this.beatmap = song.notes.map(note => {
@@ -165,7 +167,7 @@
                     trackCounter++;
                     return { ...note, track: track };
                 });
-                
+
                 gameAudio.src = song.audioSrc;
                 setTimeout(() => {
                     Game.state.startTime = performance.now();
@@ -178,9 +180,10 @@
                 if (!Game.state.isPlaying) return;
                 const elapsedTime = currentTime - Game.state.startTime;
                 
-                while (this.beatmap.length > 0 && this.beatmap[0].time < elapsedTime + 2000) {
-                    const noteData = this.beatmap.shift();
+                while (this.nextNoteIndex < this.beatmap.length && this.beatmap[this.nextNoteIndex].time < elapsedTime + 2000) {
+                    const noteData = this.beatmap[this.nextNoteIndex];
                     this.notes.push({ time: noteData.time, track: noteData.track, type: noteData.type, y: 0, active: true });
+                    this.nextNoteIndex++;
                 }
 
                 this.update(elapsedTime);
