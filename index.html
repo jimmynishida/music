@@ -11,149 +11,53 @@
         .screen.active { display: flex; }
         h1 { font-size: clamp(2.5rem, 10vw, 3.5rem); text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
         .retro-button { padding: 14px 28px; font-size: clamp(1rem, 4.5vw, 1.2rem); color: white; background: linear-gradient(145deg, var(--theme-color-1), #e06a00); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 12px; cursor: pointer; margin: 10px; min-width: 150px; box-shadow: 0 4px 0 #a04a00, 2px 2px 8px rgba(0,0,0,0.5); transition: all 0.1s ease-out; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
-        .top-stats-bar { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 100; pointer-events: none; }
-        .stats-display { background-color: rgba(0, 0, 0, 0.5); padding: 8px 15px; border-radius: 20px; font-size: clamp(1rem, 5vw, 1.3rem); font-weight: bold; border: 1px solid; pointer-events: auto; }
-        .star-display { color: gold; border-color: gold; }
-        .wallet-display { color: #FFD700; border-color: #FFD700; }
         #main-menu-screen { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/800x600/?80s,retro,road') no-repeat center center/cover; justify-content: center; }
         .main-menu-buttons { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 40px; }
         .main-menu-buttons .retro-button { width: 280px; height: 70px; font-size: 1.8rem; }
         .version-display { position: absolute; bottom: 10px; right: 10px; font-size: 12px; color: rgba(255,255,255,0.3); }
-        #mode-selection-screen, #song-selection-screen { justify-content: flex-start; padding-top: 80px; }
-        .game-choice-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; margin-top: 20px; }
-        .game-choice-card { width: clamp(130px, 35vw, 160px); height: clamp(180px, 48vw, 220px); margin: 10px; border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 12px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
-        .song-list { width: 100%; max-width: 450px; height: calc(100% - 80px); overflow-y: auto; }
-        .era-container { margin-bottom: 20px; }
-        .era-header { background: linear-gradient(90deg, transparent, rgba(255,215,0,0.2), transparent); padding: 10px; border-radius: 5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .era-title { font-size: 1.5rem; font-weight: bold; }
-        .era-lock-info { font-size: 0.9rem; opacity: 0.8; }
-        .era-locked .song-choice { display: none; }
-        .song-choice { background-color: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s; position: relative; padding-bottom: 35px; text-align: left; }
-        .song-title { font-size: clamp(1.1rem, 5vw, 1.3rem); font-weight: bold; }
-        .song-artist { font-size: clamp(0.8rem, 3.5vw, 1rem); opacity: 0.8; margin-top: 5px; }
-        .song-highscore { font-size: clamp(0.7rem, 3vw, 0.9rem); color: var(--theme-color-1); position: absolute; right: 15px; top: 15px;}
-        .song-stars-display { position: absolute; bottom: 10px; left: 15px; display: flex; gap: 5px; }
-        .star { font-size: 20px; color: #555; }
-        .star.earned { color: gold; }
+        #challenge-hub-screen, #mode-selection-screen { justify-content: flex-start; padding-top: 80px; }
     </style>
 </head>
 <body>
-    <div class="top-stats-bar"></div>
-    <div id="main-menu-screen" class="screen active"></div>
-    <div id="mode-selection-screen" class="screen"></div>
-    <div id="song-selection-screen" class="screen"></div>
-    <audio id="game-audio" preload="auto"></audio>
+    <div id="main-menu-screen" class="screen active">
+        <h1>時光迴廊</h1>
+        <div class="main-menu-buttons">
+            <button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button>
+            <button class="retro-button" id="start-free-play-btn">自由點唱</button>
+        </div>
+        <div class="version-display">v12.0</div>
+    </div>
+    <div id="challenge-hub-screen" class="screen">
+        <h1>挑戰中心</h1>
+        <button class="retro-button" id="back-to-main-from-hub-btn">返回主選單</button>
+    </div>
+    <div id="mode-selection-screen" class="screen">
+        <h1>自由點唱</h1>
+        <button class="retro-button" id="back-to-main-from-mode-btn">返回主選單</button>
+    </div>
 
     <script>
-    // =================================================================================
-    //  時光迴廊 H5 遊戲 - v13.1 (共享歌曲庫重構版)
-    // =================================================================================
     document.addEventListener('DOMContentLoaded', () => {
 
-        // --- HTML 內容注入 ---
-        document.querySelector('.top-stats-bar').innerHTML = `<div class="stats-display star-display">⭐ <span id="total-stars">0</span></div><div class="stats-display wallet-display">🪙 <span id="timecoin-balance">0</span></div>`;
-        document.getElementById('main-menu-screen').innerHTML = `<h1>時光迴廊</h1><div class="main-menu-buttons"><button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button><button class="retro-button" id="start-free-play-btn">自由點唱</button></div><div class="version-display">v13.1</div>`;
-        document.getElementById('mode-selection-screen').innerHTML = `<h1>自由點唱</h1><p>選擇你的懷舊音樂之旅</p><div class="game-choice-container"><div class="game-choice-card" data-gametype="timebeat"><div class="icon">🎶</div><div class="title">時光節拍</div></div><div class="game-choice-card" data-gametype="conductor"><div class="icon">🎼</div><div class="title">指揮家</div></div><div class="game-choice-card" data-gametype="turntable"><div class="icon">💿</div><div class="title">時光唱盤</div></div></div><button class="retro-button" id="back-to-main-from-mode-btn">返回主選單</button>`;
-        document.getElementById('song-selection-screen').innerHTML = `<h1 id="song-selection-title">選擇曲目</h1><div class="song-list" id="song-list"></div><button class="retro-button" id="back-to-mode-select-btn">返回模式選擇</button>`;
-        
-        // --- 元素獲取 ---
         const allScreens = document.querySelectorAll('.screen');
+        const startChallengeBtn = document.getElementById('start-challenge-hub-btn');
+        const startFreePlayBtn = document.getElementById('start-free-play-btn');
+        const backFromHubBtn = document.getElementById('back-to-main-from-hub-btn');
+        const backFromModeBtn = document.getElementById('back-to-main-from-mode-btn');
 
-        // --- 數據定義 (全新共享結構) ---
-        const EraData = { '80s': { name: '80年代金曲', starsToUnlock: 0 },'90s': { name: '90年代經典', starsToUnlock: 5 },};
-        const SongData = { 
-            tianmimi: { title: '甜蜜蜜', artist: '鄧麗君', era: '80s', audioSrc: 'audio/甜蜜蜜.mp3', beatmaps: { timebeat: 'beatmaps/甜蜜蜜.json' } },
-            yueliang: { title: '月亮代表我的心', artist: '鄧麗君', era: '80s', audioSrc: 'audio/月亮代表我的心.mp3', beatmaps: { timebeat: 'beatmaps/月亮代表我的心.json' } },
-            tongnian: { title: '童年', artist: '羅大佑', era: '80s', audioSrc: 'audio/童年.mp3', beatmaps: { timebeat: 'beatmaps/童年.json' } },
-            henai: { title: '很愛很愛你', artist: '劉若英', era: '90s', audioSrc: 'audio/很愛很愛你.mp3', beatmaps: { timebeat: 'beatmaps/很愛很愛你.json' } },
-            xiaosa: { title: '瀟灑走一回', artist: '葉蒨文', era: '90s', audioSrc: 'audio/瀟灑走一回.mp3', beatmaps: { timebeat: 'beatmaps/瀟灑走一回.json' } },
-            naner: { title: '男兒當自強', artist: '林子祥', era: '90s', audioSrc: 'audio/男兒當自強.mp3', beatmaps: { conductor: 'beatmaps/男兒當自強.json' } }
-        };
+        function showScreen(screenId) {
+            allScreens.forEach(s => s.classList.remove('active'));
+            const activeScreen = document.getElementById(screenId);
+            if (activeScreen) activeScreen.classList.add('active');
+        }
 
-        // --- 模組定義 (一次性完整定義) ---
-        const Wallet = {
-            coins: 0, ui: document.getElementById('timecoin-balance'),
-            load() { try { this.coins = parseInt(localStorage.getItem('timeCoins') || '100', 10); } catch (e) { this.coins = 100; } this.updateUI(); },
-            save() { try { localStorage.setItem('timeCoins', this.coins); } catch(e) {} },
-            updateUI() { if (this.ui) this.ui.textContent = this.coins; }
-        };
-        const Leaderboard = {
-            playerProgress: {},
-            init() { try { const p = localStorage.getItem('playerProgress'); if(p) this.playerProgress = JSON.parse(p); } catch(e) { this.playerProgress = {}; } this.updateTotalStarsUI(); },
-            getTotalStars() { let total = 0; for (const mode in this.playerProgress) { for (const songId in this.playerProgress[mode]) { total += this.playerProgress[mode][songId].stars || 0; } } return total; },
-            updateTotalStarsUI() { document.getElementById('total-stars').textContent = this.getTotalStars(); },
-            save() { try { localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress)); } catch(e){} }
-        };
-        const SongSelection = {
-            render() {
-                const gameType = Game.state.activeGame;
-                const songListContainer = document.getElementById('song-list');
-                songListContainer.innerHTML = '';
-                const totalStars = Leaderboard.getTotalStars();
-                const titleMap = { timebeat: '時光節拍', conductor: '指揮家', turntable: '時光唱盤' };
-                document.getElementById('song-selection-title').textContent = titleMap[gameType] || "選擇曲目";
-                
-                for (const eraId in EraData) {
-                    const era = EraData[eraId];
-                    const isEraLocked = totalStars < era.starsToUnlock;
-                    const eraContainer = document.createElement('div');
-                    eraContainer.className = 'era-container' + (isEraLocked ? ' era-locked' : '');
-                    let headerHTML = `<div class="era-header"><div class="era-title">${era.name}</div>`;
-                    if (isEraLocked) { headerHTML += `<div class="era-lock-info">🔒 需要 ${era.starsToUnlock} ⭐ 解鎖</div>`; }
-                    headerHTML += `</div>`;
-                    eraContainer.innerHTML = headerHTML;
-                    
-                    for (const songId in SongData) {
-                        const song = SongData[songId];
-                        if (song.era === eraId && song.beatmaps[gameType]) {
-                            const progress = Leaderboard.playerProgress[gameType]?.[songId];
-                            const highscore = progress?.score ? `<div class="song-highscore">最高分: ${progress.score}</div>` : '';
-                            let starsHTML = '<div class="song-stars-display">';
-                            const savedStars = progress?.stars || 0;
-                            for(let i = 0; i < 3; i++) { starsHTML += `<span class="star ${i < savedStars ? 'earned' : ''}">★</span>`; }
-                            starsHTML += '</div>';
-                            const songEl = document.createElement('div');
-                            songEl.className = 'song-choice';
-                            songEl.innerHTML = `<div class="song-title">${song.title}</div><div class="song-artist">${song.artist}</div>${highscore}${starsHTML}`;
-                            songEl.addEventListener('click', () => {
-                                if (isEraLocked) { alert(`需要 ${era.starsToUnlock} 顆星星才能解鎖這個篇章！`); return; }
-                                alert(`準備播放 ${song.title}！(遊戲邏輯待整合)`);
-                            });
-                            eraContainer.appendChild(songEl);
-                        }
-                    }
-                    songListContainer.appendChild(eraContainer);
-                }
-            }
-        };
-
-        const Game = {
-            state: { activeGame: null },
-            init() {
-                Wallet.load();
-                Leaderboard.init();
-                
-                document.getElementById('start-challenge-hub-btn').addEventListener('click', () => alert("此功能待開發"));
-                document.getElementById('start-free-play-btn').addEventListener('click', () => this.showScreen('mode-selection-screen'));
-                document.getElementById('back-to-main-from-mode-btn').addEventListener('click', () => this.showScreen('main-menu-screen'));
-                document.getElementById('back-to-mode-select-btn').addEventListener('click', () => this.showScreen('mode-selection-screen'));
-                document.querySelectorAll('#mode-selection-screen .game-choice-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        this.state.activeGame = card.dataset.gametype;
-                        this.showScreen('song-selection-screen');
-                        SongSelection.render();
-                    });
-                });
-                this.showScreen('main-menu-screen');
-            },
-            showScreen(screenId) {
-                allScreens.forEach(s => s.classList.remove('active'));
-                const activeScreen = document.getElementById(screenId);
-                if (activeScreen) activeScreen.classList.add('active');
-            }
-        };
+        if (startChallengeBtn) startChallengeBtn.addEventListener('click', () => showScreen('challenge-hub-screen'));
+        if (startFreePlayBtn) startFreePlayBtn.addEventListener('click', () => showScreen('mode-selection-screen'));
+        if (backFromHubBtn) backFromHubBtn.addEventListener('click', () => showScreen('main-menu-screen'));
+        if (backFromModeBtn) backFromModeBtn.addEventListener('click', () => showScreen('main-menu-screen'));
         
-        Game.init();
+        showScreen('main-menu-screen');
+        console.log("遊戲核心 v12.0 已成功啟動！");
     });
     </script>
 </body>
