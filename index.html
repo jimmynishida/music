@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>時光迴廊 - 完整版</title>
+    <title>時光迴廊 - 完整穩定版</title>
     <style>
         :root { --theme-color-1: #ff8c00; --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: var(--font-family); overflow: hidden; touch-action: manipulation; background: linear-gradient(135deg, #2a2a3e, #4a3a4a); color: white; user-select: none; -webkit-user-select: none; }
@@ -55,7 +55,7 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - v23.1 (完整功能版)
+    //  時光迴廊 H5 遊戲 - v23.2 (最終穩定版)
     // =================================================================================
     document.addEventListener('DOMContentLoaded', () => {
         
@@ -73,7 +73,7 @@
                 this.notes.forEach(note => { if (note.active) { const timeDiff = note.time - elapsedTime; note.y = hitLineY - (timeDiff * 0.8); if (timeDiff < -150) { note.active = false; Game.updateCombo(false); } } });
                 this.notes = this.notes.filter(n => n.active || n.y < this.canvas.height + 50);
             },
-            draw() { if(!this.ctx) return; this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); const hitLineY = this.canvas.height * 0.85; this.ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; this.ctx.fillRect(0, hitLineY - 25, this.canvas.width, 50); this.notes.forEach(note => { if (note.active) { const trackWidth = this.canvas.width / 3; const x = trackWidth * note.track + trackWidth / 2; this.ctx.fillStyle = 'cyan'; this.ctx.beginPath(); this.ctx.arc(x, note.y, 30, 0, Math.PI * 2); this.ctx.fill(); } }); },
+            draw() { if(!this.ctx) return; this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); const hitLineY = this.canvas.height * 0.85; this.ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; this.ctx.fillRect(0, hitLineY - 25, this.canvas.width, 50); this.notes.forEach(note => { if (note.active) { const trackWidth = this.canvas.width / 3; const x = trackWidth * note.track + trackWidth / 2; this.ctx.fillStyle = note.type === 'strong' ? 'orangered' : 'cyan'; this.ctx.beginPath(); this.ctx.arc(x, note.y, 30, 0, Math.PI * 2); this.ctx.fill(); } }); },
             handleTap(e) { if (!Game.state.isPlaying) return; const rect = this.canvas.getBoundingClientRect(); const x = e.clientX - rect.left; const track = Math.floor(x / (this.canvas.width / 3)); Game.handleHit(performance.now() - Game.getStartTime(), { track }); },
             getNotes() { return this.notes; }
         };
@@ -90,17 +90,11 @@
             },
             draw() {},
             createNoteElement(noteData, id) {
-                const el = document.createElement('div');
-                const size = noteData.type === 'strong' ? 80 : 50;
+                const el = document.createElement('div'); const size = noteData.type === 'strong' ? 80 : 50;
                 el.style.cssText = `position:absolute; width:${size}px; height:${size}px; background:${noteData.type === 'strong' ? 'orangered':'cyan'}; border-radius:50%; transition: transform 0.1s, opacity 0.3s; transform: scale(0); opacity: 1; box-shadow: 0 0 15px ${noteData.type === 'strong' ? 'orangered':'cyan'}; cursor: pointer;`;
                 el.style.left = `${10 + Math.random() * 70}%`; el.style.top = `${15 + Math.random() * 70}%`; el.dataset.id = id;
                 setTimeout(() => el.style.transform = 'scale(1)', 50);
-                el.addEventListener('pointerdown', e => {
-                    e.stopPropagation(); const thisNote = this.notes.find(n => n.id == e.currentTarget.dataset.id); if (!thisNote?.active) return;
-                    let hasSwiped = false; const onPointerMove = () => hasSwiped = true;
-                    const onPointerUp = () => { document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onPointerUp); if(hasSwiped) { Game.handleHit(performance.now() - Game.getStartTime(), { id: thisNote.id }); thisNote.active = false; e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.opacity = '0'; } };
-                    document.addEventListener('pointermove', onPointerMove); document.addEventListener('pointerup', onPointerUp);
-                });
+                el.addEventListener('pointerdown', e => { e.stopPropagation(); const thisNote = this.notes.find(n => n.id == e.currentTarget.dataset.id); if (!thisNote?.active) return; let hasSwiped = false; const onPointerMove = () => hasSwiped = true; const onPointerUp = () => { document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onPointerUp); if(hasSwiped) { Game.handleHit(performance.now() - Game.getStartTime(), { id: thisNote.id }); thisNote.active = false; e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.opacity = '0'; } }; document.addEventListener('pointermove', onPointerMove); document.addEventListener('pointerup', onPointerUp); });
                 return el;
             },
             getNotes() { return this.notes; }
@@ -124,7 +118,7 @@
         };
 
         const Tutorial = {
-            init(domRefs) { this.screen = domRefs.tutorialScreen; this.backgroundEl = this.screen.querySelector('#tutorial-background'); this.textEl = this.screen.querySelector('#tutorial-text'); this.animationContainer = this.screen.querySelector('#tutorial-animation-container'); this.shownForModes = JSON.parse(localStorage.getItem('tutorialShown') || '{}'); },
+            init(domRefs) { this.screen = domRefs.tutorialScreen; if(this.screen) {this.backgroundEl = this.screen.querySelector('#tutorial-background'); this.textEl = this.screen.querySelector('#tutorial-text'); this.animationContainer = this.screen.querySelector('#tutorial-animation-container');} this.shownForModes = JSON.parse(localStorage.getItem('tutorialShown') || '{}'); },
             shouldShow(gameMode) { return !this.shownForModes[gameMode]; },
             generateBackground(gameMode) { const tempCanvas = document.createElement('canvas'); tempCanvas.width = window.innerWidth; tempCanvas.height = window.innerHeight; const tempCtx = tempCanvas.getContext('2d'); if (gameMode === 'timebeat' && TimeBeat.canvas) { TimeBeat.draw.call({ctx: tempCtx, canvas: tempCanvas, notes: []}); } else if (gameMode === 'turntable' && Turntable.canvas) { Turntable.draw.call({ctx: tempCtx, canvas: tempCanvas, notes: [], rotation: 0.5}); } else { tempCtx.fillStyle = '#1a1a1a'; tempCtx.fillRect(0,0,tempCanvas.width, tempCanvas.height); } this.backgroundEl.style.backgroundImage = `url(${tempCanvas.toDataURL()})`; },
             show(gameMode) { return new Promise(resolve => { const content = { timebeat: { text: '當音符下落到判定線時，點擊對應軌道！', animClass: 'anim-tap' }, conductor: { text: '在音符上滑動手指，完成一次指揮！', animClass: 'anim-swipe' }, turntable: { text: '當音符經過唱針時，藍色點擊，紅色搓盤！', animClass: 'anim-scratch' } }; if (!content[gameMode]) { resolve(); return; } this.generateBackground(gameMode); this.textEl.textContent = content[gameMode].text; this.animationContainer.innerHTML = `<div class="finger-icon ${content[gameMode].animClass}">👆</div>`; this.screen.classList.add('active'); const closeBtn = this.screen.querySelector('#close-tutorial-btn'); const closeHandler = () => { this.screen.classList.remove('active'); this.shownForModes[gameMode] = true; localStorage.setItem('tutorialShown', JSON.stringify(this.shownForModes)); closeBtn.removeEventListener('click', closeHandler); resolve(); }; closeBtn.addEventListener('click', closeHandler); }); }
@@ -140,7 +134,13 @@
                 Tutorial.init(this.dom); this.showScreen('main-menu-screen');
             },
             cacheDOM() { this.dom.screens = document.querySelectorAll('.screen'); this.dom.mainMenu = document.getElementById('main-menu-screen'); this.dom.modeSelection = document.getElementById('mode-selection-screen'); this.dom.songSelection = document.getElementById('song-selection-screen'); this.dom.endScreen = document.getElementById('end-screen'); this.dom.tutorialScreen = document.getElementById('tutorial-screen'); this.dom.gameStats = document.querySelector('.game-stats'); this.dom.score = document.getElementById('score'); this.dom.combo = document.getElementById('combo'); this.dom.finalScore = document.getElementById('final-score'); this.dom.gameAudio = document.getElementById('game-audio'); this.dom.gameUiContainers = document.querySelectorAll('.game-ui-container'); },
-            injectHTML() { this.dom.mainMenu.innerHTML = `<h1>時光迴廊</h1><button class.retro-button" id="start-btn">開始遊戲</button><div class="version-display">v23.1</div>`; this.dom.modeSelection.innerHTML = `<h1>選擇模式</h1><div style="display:flex;"><div class="game-choice-card" data-gametype="timebeat"><h2>時光節拍</h2></div><div class="game-choice-card" data-gametype="conductor"><h2>指揮家</h2></div><div class="game-choice-card" data-gametype="turntable"><h2>時光唱盤</h2></div></div><button class="retro-button" id="back-to-main-btn">返回主選單</button>`; this.dom.songSelection.innerHTML = `<h1 id="song-list-title">選擇歌曲</h1><div id="song-list" style="width:100%; max-width: 400px; height: 70%; overflow-y: auto;"></div><button class="retro-button" id="back-to-mode-btn">返回模式選擇</button>`; this.dom.endScreen.innerHTML = `<h1>演奏結束</h1><p>得分: <span id="final-score">0</span></p><button class="retro-button" id="retry-btn">重試</button><button class="retro-button" id="back-to-songs-btn">返回選曲</button>`; },
+            injectHTML() {
+                this.dom.mainMenu.innerHTML = `<h1>時光迴廊</h1><button class="retro-button" id="start-btn">開始遊戲</button><div class="version-display">v23.2</div>`;
+                this.dom.modeSelection.innerHTML = `<h1>選擇模式</h1><div style="display:flex; flex-wrap:wrap; justify-content:center;"><div class="game-choice-card" data-gametype="timebeat"><h2>時光節拍</h2></div><div class="game-choice-card" data-gametype="conductor"><h2>指揮家</h2></div><div class="game-choice-card" data-gametype="turntable"><h2>時光唱盤</h2></div></div><button class="retro-button" id="back-to-main-btn">返回主選單</button>`;
+                this.dom.songSelection.innerHTML = `<h1 id="song-list-title">選擇歌曲</h1><div id="song-list" style="width:100%; max-width: 400px; height: 70%; overflow-y: auto;"></div><button class="retro-button" id="back-to-mode-btn">返回模式選擇</button>`;
+                this.dom.endScreen.innerHTML = `<h1>演奏結束</h1><p>得分: <span id="final-score">0</span></p><button class="retro-button" id="retry-btn">重試</button><button class="retro-button" id="back-to-songs-btn">返回選曲</button>`;
+                this.dom.tutorialScreen.innerHTML = `<div id="tutorial-background"></div><div id="tutorial-content"><h2>玩法教學</h2><p id="tutorial-text"></p><div id="tutorial-animation-container"></div><button class="retro-button" id="close-tutorial-btn">我明白了！</button></div>`;
+            },
             attachListeners() {
                 this.dom.mainMenu.addEventListener('click', (e) => { if (e.target.id === 'start-btn') this.showScreen('mode-selection-screen'); });
                 this.dom.modeSelection.addEventListener('click', async (e) => { const card = e.target.closest('.game-choice-card'); if (card) { this.state.activeGame = card.dataset.gametype; if (Tutorial.shouldShow(this.state.activeGame)) { await Tutorial.show(this.state.activeGame); } this.renderSongList(); this.showScreen('song-selection-screen'); } if (e.target.id === 'back-to-main-btn') this.showScreen('main-menu-screen'); });
