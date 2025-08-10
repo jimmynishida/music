@@ -11,6 +11,7 @@
         .screen.active { display: flex; }
         h1 { font-size: clamp(2.5rem, 10vw, 3.5rem); text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
         .retro-button { padding: 14px 28px; font-size: clamp(1rem, 4.5vw, 1.2rem); color: white; background: linear-gradient(145deg, var(--theme-color-1), #e06a00); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 12px; cursor: pointer; margin: 10px; min-width: 150px; box-shadow: 0 4px 0 #a04a00, 2px 2px 8px rgba(0,0,0,0.5); transition: all 0.1s ease-out; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); }
+        .retro-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a04a00; }
         .top-stats-bar { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 100; pointer-events: none; }
         .stats-display { background-color: rgba(0, 0, 0, 0.5); padding: 8px 15px; border-radius: 20px; font-size: clamp(1rem, 5vw, 1.3rem); font-weight: bold; border: 1px solid; pointer-events: auto; }
         .star-display { color: gold; border-color: gold; }
@@ -22,6 +23,8 @@
         #mode-selection-screen, #song-selection-screen { justify-content: flex-start; padding-top: 80px; }
         .game-choice-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; width: 100%; margin-top: 20px; }
         .game-choice-card { width: clamp(130px, 35vw, 160px); height: clamp(180px, 48vw, 220px); margin: 10px; border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 12px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
+        .game-choice-card .icon { font-size: clamp(3rem, 15vw, 4rem); }
+        .game-choice-card .title { font-size: clamp(1.2rem, 5vw, 1.5rem); margin-top: 15px; font-weight: bold; }
         .song-list { width: 100%; max-width: 450px; height: calc(100% - 80px); overflow-y: auto; }
         .era-container { margin-bottom: 20px; }
         .era-header { background: linear-gradient(90deg, transparent, rgba(255,215,0,0.2), transparent); padding: 10px; border-radius: 5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
@@ -61,20 +64,15 @@
         // --- 元素獲取 ---
         const allScreens = document.querySelectorAll('.screen');
 
-        // --- 數據定義 ---
+        // --- 數據定義 (共享歌曲庫) ---
         const EraData = { '80s': { name: '80年代金曲', starsToUnlock: 0 }, '90s': { name: '90年代經典', starsToUnlock: 5 } };
-        const SongData = {
-            timebeat: {
-                tianmimi: { era: '80s', title: '甜蜜蜜', artist: '鄧麗君', audioSrc: 'audio/甜蜜蜜.mp3'},
-                yueliang: { era: '80s', title: '月亮代表我的心', artist: '鄧麗君', audioSrc: 'audio/月亮代表我的心.mp3'},
-                tongnian: { era: '80s', title: '童年', artist: '羅大佑', audioSrc: 'audio/童年.mp3'},
-                henai: { era: '90s', title: '很愛很愛你', artist: '劉若英', audioSrc: 'audio/很愛很愛你.mp3'},
-                xiaosa: { era: '90s', title: '瀟灑走一回', artist: '葉蒨文', audioSrc: 'audio/瀟灑走一回.mp3'}
-            },
-            conductor: {
-                naner: { era: '90s', title: '男兒當自強', artist: '林子祥', audioSrc: 'audio/男兒當自強.mp3' }
-            },
-            turntable: {}
+        const SongData = { 
+            tianmimi: { title: '甜蜜蜜', artist: '鄧麗君', era: '80s', audioSrc: 'audio/甜蜜蜜.mp3', beatmaps: { timebeat: 'beatmaps/甜蜜蜜.json' } },
+            yueliang: { title: '月亮代表我的心', artist: '鄧麗君', era: '80s', audioSrc: 'audio/月亮代表我的心.mp3', beatmaps: { timebeat: 'beatmaps/月亮代表我的心.json' } },
+            tongnian: { title: '童年', artist: '羅大佑', era: '80s', audioSrc: 'audio/童年.mp3', beatmaps: { timebeat: 'beatmaps/童年.json' } },
+            henai: { title: '很愛很愛你', artist: '劉若英', era: '90s', audioSrc: 'audio/很愛很愛你.mp3', beatmaps: { timebeat: 'beatmaps/很愛很愛你.json' } },
+            xiaosa: { title: '瀟灑走一回', artist: '葉蒨文', era: '90s', audioSrc: 'audio/瀟灑走一回.mp3', beatmaps: { timebeat: 'beatmaps/瀟灑走一回.json' } },
+            naner: { title: '男兒當自強', artist: '林子祥', era: '90s', audioSrc: 'audio/男兒當自強.mp3', beatmaps: { conductor: 'beatmaps/男兒當自強.json' } }
         };
         
         // --- 模組定義 ---
@@ -88,7 +86,8 @@
             playerProgress: {},
             init() { try { const p = localStorage.getItem('playerProgress'); if(p) this.playerProgress = JSON.parse(p); } catch(e) { this.playerProgress = {}; } this.updateTotalStarsUI(); },
             getTotalStars() { let total = 0; for (const mode in this.playerProgress) { for (const songId in this.playerProgress[mode]) { total += this.playerProgress[mode][songId].stars || 0; } } return total; },
-            updateTotalStarsUI() { document.getElementById('total-stars').textContent = this.getTotalStars(); }
+            updateTotalStarsUI() { document.getElementById('total-stars').textContent = this.getTotalStars(); },
+            save() { try { localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress)); } catch(e){} }
         };
         const SongSelection = {
             render() {
@@ -108,9 +107,11 @@
                     if (isEraLocked) { headerHTML += `<div class="era-lock-info">🔒 需要 ${era.starsToUnlock} ⭐ 解鎖</div>`; }
                     headerHTML += `</div>`;
                     eraContainer.innerHTML = headerHTML;
-                    for (const songId in SongData[gameType]) {
-                        const song = SongData[gameType][songId];
-                        if (song.era === eraId) {
+                    
+                    // 核心修正：遍歷所有歌曲，檢查是否屬於此篇章且在當前模式下有譜面
+                    for (const songId in SongData) {
+                        const song = SongData[songId];
+                        if (song.era === eraId && song.beatmaps[gameType]) {
                             const progress = Leaderboard.playerProgress[gameType]?.[songId];
                             const highscore = progress?.score ? `<div class="song-highscore">最高分: ${progress.score}</div>` : '';
                             let starsHTML = '<div class="song-stars-display">';
