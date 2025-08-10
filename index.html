@@ -5,17 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>時光迴廊 - 核心驗證版</title>
     <style>
-        :root { --theme-color-1: #ff8c00; --font-family: 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: var(--font-family); overflow: hidden; touch-action: manipulation; background: linear-gradient(135deg, #2a2a3e, #4a3a4a); color: white; user-select: none; -webkit-user-select: none; }
-        .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); text-align: center; transition: opacity 0.5s ease; box-sizing: border-box; padding: 20px; z-index: 200; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; overflow: hidden; touch-action: manipulation; background: #1a1a1a; color: white; user-select: none; -webkit-user-select: none; }
+        .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.7); text-align: center; padding: 20px; box-sizing: border-box; }
         .screen.active { display: flex; }
-        h1 { font-size: clamp(2.5rem, 10vw, 3.5rem); text-shadow: 2px 2px 8px rgba(0,0,0,0.8); }
-        .retro-button { padding: 14px 28px; font-size: clamp(1rem, 4.5vw, 1.2rem); color: white; background: linear-gradient(145deg, var(--theme-color-1), #e06a00); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 12px; cursor: pointer; margin: 10px; min-width: 150px; box-shadow: 0 4px 0 #a04a00; }
-        .retro-button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a04a00; }
+        h1 { font-size: 3rem; }
+        .retro-button { padding: 15px 30px; font-size: 1.5rem; color: white; background: #ff8c00; border: 2px solid #fff; border-radius: 12px; cursor: pointer; margin: 10px; }
         #main-menu-screen { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://source.unsplash.com/random/800x600/?80s,retro,road') no-repeat center center/cover; }
         #mode-selection-screen, #song-selection-screen { justify-content: flex-start; padding-top: 80px; }
-        .game-choice-card { width: clamp(130px, 35vw, 160px); height: clamp(180px, 48vw, 220px); margin: 10px; border: 3px solid #fff; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
-        .song-choice { background-color: rgba(0,0,0,0.3); border: 2px solid #fff; border-radius: 10px; padding: 15px; margin-bottom: 15px; cursor: pointer; }
+        .game-choice-card { width: 150px; height: 200px; margin: 10px; border: 3px solid #fff; border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .song-choice { background-color: rgba(0,0,0,0.3); border: 2px solid #fff; border-radius: 10px; padding: 15px; margin-bottom: 15px; cursor: pointer; width: 100%; box-sizing: border-box; }
         .game-ui-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; }
         .game-ui-container.active { display: block; }
         .game-stats { position: fixed; top: 20px; left: 20px; right: 20px; z-index: 50; display: flex; justify-content: space-between; font-size: 1.5rem; color: white; text-shadow: 2px 2px 4px black; }
@@ -53,41 +51,48 @@
             <span>連擊: <span id="combo">0</span></span>
         </div>
         <div id="timebeat-game-area" class="game-ui-container"><canvas id="timebeat-canvas"></canvas></div>
-        <div id="conductor-game-area" class="game-ui-container"></div>
-        <div id="turntable-game-area" class="game-ui-container"><canvas id="turntable-canvas"></canvas></div>
     </div>
     <audio id="game-audio" preload="auto"></audio>
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - v18.0 (核心功能驗證版)
+    //  時光迴廊 H5 遊戲 - v18.1 (核心功能修正版)
     // =================================================================================
     document.addEventListener('DOMContentLoaded', () => {
         console.log("DOM is ready. Initializing game...");
 
-        // --- 數據定義 ---
         const SongData = { tianmimi: { title: '甜蜜蜜', beatmapSrc: 'beatmaps/甜蜜蜜.json', audioSrc: 'audio/甜蜜蜜.mp3', duration: 21000, availableModes: ['timebeat', 'turntable'] }, yueliang: { title: '月亮代表我的心', beatmapSrc: 'beatmaps/月亮代表我的心.json', audioSrc: 'audio/月亮代表我的心.mp3', duration: 17000, availableModes: ['timebeat', 'conductor'] }, naner: { title: '男兒當自強', beatmapSrc: 'beatmaps/男兒當自強.json', audioSrc: 'audio/男兒當自強.mp3', duration: 19100, availableModes: ['conductor', 'turntable'] } };
 
-        // --- 遊戲模組 (簡化版) ---
         const TimeBeat = {
-            canvas: null, ctx: null, notes: [],
-            init() { this.canvas = document.getElementById('timebeat-canvas'); this.ctx = this.canvas.getContext('2d'); },
+            canvas: null, ctx: null, notes: [], beatmap: [], nextNoteIndex: 0,
+            init() {
+                this.canvas = document.getElementById('timebeat-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resize(); // [修正] 初始化時設定一次畫布尺寸
+                window.addEventListener('resize', this.resize.bind(this));
+            },
+            resize() {
+                if (!this.canvas) return;
+                console.log("TimeBeat: Resizing canvas.");
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            },
             start(beatmap) {
                 console.log("TimeBeat: Starting game.");
-                this.notes = []; this.nextNoteIndex = 0;
+                this.notes = [];
+                this.nextNoteIndex = 0; // [修正] 初始化音符索引
                 let trackCounter = 0;
                 this.beatmap = beatmap.map(note => ({ ...note, track: trackCounter++ % 3 }));
-                this.canvas.style.display = 'block';
                 this.boundHandleTap = this.handleTap.bind(this);
                 this.canvas.addEventListener('pointerdown', this.boundHandleTap);
             },
-            stop() { this.canvas.removeEventListener('pointerdown', this.boundHandleTap); this.canvas.style.display = 'none'; },
+            stop() { this.canvas.removeEventListener('pointerdown', this.boundHandleTap); },
             update(elapsedTime) {
-                const hitLineY = this.canvas.height * 0.85;
                 while (this.nextNoteIndex < this.beatmap.length && this.beatmap[this.nextNoteIndex].time < elapsedTime + 2000) {
                     this.notes.push({ ...this.beatmap[this.nextNoteIndex], y: 0, active: true });
                     this.nextNoteIndex++;
                 }
+                const hitLineY = this.canvas.height * 0.85;
                 this.notes.forEach(note => {
                     if (note.active) {
                         const timeDiff = note.time - elapsedTime;
@@ -95,6 +100,7 @@
                         if (timeDiff < -150) { note.active = false; Game.updateCombo(false); }
                     }
                 });
+                this.notes = this.notes.filter(n => n.active);
             },
             draw() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -111,6 +117,7 @@
                 });
             },
             handleTap(e) {
+                if (!Game.state.isPlaying) return;
                 const rect = this.canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const track = Math.floor(x / (this.canvas.width / 3));
@@ -118,10 +125,9 @@
             }
         };
 
-        const Conductor = { /* 為了簡化，暫時留空 */ start(){ alert('此模式待驗證'); Game.showScreen('mode-selection-screen'); }, stop(){} };
-        const Turntable = { /* 為了簡化，暫時留空 */ start(){ alert('此模式待驗證'); Game.showScreen('mode-selection-screen'); }, stop(){} };
+        const Conductor = { start(){ alert('此模式待驗證'); Game.showScreen('mode-selection-screen'); }, stop(){} };
+        const Turntable = { start(){ alert('此模式待驗證'); Game.showScreen('mode-selection-screen'); }, stop(){} };
 
-        // --- 主遊戲控制器 ---
         const Game = {
             state: { activeGame: null, currentSongId: null, score: 0, combo: 0, isPlaying: false, startTime: 0, beatmap: [] },
             dom: {},
@@ -130,6 +136,7 @@
             init() {
                 this.dom.screens = document.querySelectorAll('.screen');
                 this.dom.gameContainer = document.getElementById('game-container');
+                this.dom.gameUiContainers = document.querySelectorAll('.game-ui-container');
                 this.dom.gameStats = document.querySelector('.game-stats');
                 this.dom.score = document.getElementById('score');
                 this.dom.combo = document.getElementById('combo');
@@ -138,7 +145,6 @@
 
                 Object.values(this.modules).forEach(m => m.init?.());
 
-                // 綁定事件
                 document.getElementById('start-btn').addEventListener('click', () => this.showScreen('mode-selection-screen'));
                 document.getElementById('back-to-main-btn').addEventListener('click', () => this.showScreen('main-menu-screen'));
                 document.getElementById('back-to-mode-btn').addEventListener('click', () => this.showScreen('mode-selection-screen'));
@@ -160,8 +166,16 @@
             showScreen(screenId) {
                 console.log(`Showing screen: ${screenId}`);
                 this.dom.screens.forEach(s => s.classList.remove('active'));
-                const screen = document.getElementById(screenId);
-                if (screen) screen.classList.add('active'); else console.error(`Screen #${screenId} not found!`);
+                if (screenId === 'none') {
+                    this.dom.gameStats.style.display = 'flex';
+                    const gameArea = document.getElementById(`${this.state.activeGame}-game-area`);
+                    if(gameArea) gameArea.classList.add('active');
+                } else {
+                    this.dom.gameStats.style.display = 'none';
+                    this.dom.gameUiContainers.forEach(c => c.classList.remove('active'));
+                    const screen = document.getElementById(screenId);
+                    if (screen) screen.classList.add('active'); else console.error(`Screen #${screenId} not found!`);
+                }
             },
             
             renderSongList() {
@@ -187,15 +201,12 @@
                 this.state.currentSongId = songId;
                 const song = SongData[songId];
 
-                // 載入譜面
                 try {
                     console.log(`Fetching beatmap: ${song.beatmapSrc}`);
                     const response = await fetch(song.beatmapSrc);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const rawBeatmap = await response.json();
-                    this.state.beatmap = rawBeatmap
-                        .filter(e => e.type === 'tap')
-                        .map(e => ({ time: e.time * 1000, type: e.type }));
+                    this.state.beatmap = rawBeatmap.filter(e => e.type === 'tap').map(e => ({ time: e.time * 1000, type: e.type }));
                     console.log("Beatmap loaded and processed successfully.");
                 } catch (e) {
                     console.error("Failed to load beatmap:", e);
@@ -203,27 +214,22 @@
                     return;
                 }
 
-                // 準備遊戲
                 this.state.score = 0; this.state.combo = 0;
                 this.dom.score.textContent = 0; this.dom.combo.textContent = 0;
                 this.showScreen('none');
-                this.dom.gameStats.style.display = 'flex';
                 
                 const gameModule = this.modules[this.state.activeGame];
                 if (!gameModule || !gameModule.start) {
                     console.error(`Game module for "${this.state.activeGame}" is not implemented.`);
-                    alert(`遊戲模式 "${this.state.activeGame}" 尚未完成。`);
-                    this.showScreen('mode-selection-screen');
-                    return;
+                    this.showScreen('mode-selection-screen'); return;
                 }
                 
-                // 延遲開始
                 console.log("Starting game in 1.5 seconds...");
                 setTimeout(() => {
                     this.state.isPlaying = true;
                     this.state.startTime = performance.now();
                     this.dom.gameAudio.src = song.audioSrc;
-                    this.dom.gameAudio.play();
+                    this.dom.gameAudio.play().catch(e => console.error("Audio play failed:", e));
 
                     gameModule.start(this.state.beatmap);
                     this.gameLoop();
@@ -232,7 +238,6 @@
 
             gameLoop() {
                 if (!this.state.isPlaying) return;
-
                 const elapsedTime = performance.now() - this.state.startTime;
                 const gameModule = this.modules[this.state.activeGame];
                 
@@ -253,7 +258,6 @@
                 if (this.state.activeGame === 'timebeat') {
                     noteToHit = gameModule.notes.find(n => n.active && n.track === hitData.track && Math.abs(n.time - elapsedTime) < 150);
                 }
-                // 此處故意留空其他模式，專注驗證 TimeBeat
 
                 if (noteToHit) {
                     console.log("Hit registered!");
@@ -275,12 +279,11 @@
                 this.state.isPlaying = false;
                 this.modules[this.state.activeGame].stop();
                 this.dom.gameAudio.pause();
-                this.dom.gameStats.style.display = 'none';
                 this.dom.finalScore.textContent = this.state.score;
                 this.showScreen('end-screen');
             },
 
-            getStartTime: () => this.state.startTime,
+            getStartTime: () => Game.state.startTime,
         };
 
         Game.init();
