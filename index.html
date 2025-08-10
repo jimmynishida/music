@@ -29,19 +29,14 @@
         .era-lock-info { font-size: 0.9rem; opacity: 0.8; }
         .era-locked .song-choice { opacity: 0.6; cursor: not-allowed; }
         .song-choice { background-color: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px; cursor: pointer; transition: all 0.2s; position: relative; padding-bottom: 35px; text-align: left; }
-        .song-title { font-size: clamp(1.1rem, 5vw, 1.3rem); font-weight: bold; }
-        .song-artist { font-size: clamp(0.8rem, 3.5vw, 1rem); opacity: 0.8; margin-top: 5px; }
-        .song-highscore { font-size: clamp(0.7rem, 3vw, 0.9rem); color: var(--theme-color-1); position: absolute; right: 15px; top: 15px;}
-        .song-stars-display { position: absolute; bottom: 10px; left: 15px; display: flex; gap: 5px; }
-        .star { font-size: 20px; color: #555; }
-        .star.earned { color: gold; }
         .game-ui-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; pointer-events: none; }
         .game-ui-container.active { display: block; pointer-events: auto; }
         .game-stats { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 50; display: none; justify-content: space-between; font-size: clamp(1.2rem, 5vw, 1.8rem); color: white; text-shadow: 2px 2px 4px black; }
-        #timebeat-game-area canvas, #conductor-canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
+        #timebeat-game-area canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; }
         #end-screen-content { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #result-stars-container { display: flex; justify-content: center; font-size: 40px; margin: 10px 0; }
-        #result-coins { color: #FFD700; font-weight: bold; }
+        .star { font-size: 20px; color: #555; }
+        .star.earned { color: gold; }
     </style>
 </head>
 <body>
@@ -55,13 +50,13 @@
 
     <script>
     // =================================================================================
-    //  時光迴廊 H5 遊戲 - v13.0 (TimeBeat 完整功能最終版)
+    //  時光迴廊 H5 遊戲 - v12.2 (TimeBeat 完整功能最終版)
     // =================================================================================
     document.addEventListener('DOMContentLoaded', () => {
 
         // --- HTML 內容注入 ---
         document.querySelector('.top-stats-bar').innerHTML = `<div class="stats-display star-display">⭐ <span id="total-stars">0</span></div><div class="stats-display wallet-display">🪙 <span id="timecoin-balance">0</span></div>`;
-        document.getElementById('main-menu-screen').innerHTML = `<h1>時光迴廊</h1><div class="main-menu-buttons"><button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button><button class="retro-button" id="start-free-play-btn">自由點唱</button></div><div class="version-display">v13.0</div>`;
+        document.getElementById('main-menu-screen').innerHTML = `<h1>時光迴廊</h1><div class="main-menu-buttons"><button class="retro-button" id="start-challenge-hub-btn">今日挑戰</button><button class="retro-button" id="start-free-play-btn">自由點唱</button></div><div class="version-display">v12.2</div>`;
         document.getElementById('mode-selection-screen').innerHTML = `<h1>自由點唱</h1><p>選擇你的懷舊音樂之旅</p><div class="game-choice-container"><div class="game-choice-card" data-gametype="timebeat"><div class="icon">🎶</div><div class="title">時光節拍</div></div><div class="game-choice-card" data-gametype="conductor"><div class="icon">🎼</div><div class="title">指揮家</div></div><div class="game-choice-card" data-gametype="turntable"><div class="icon">💿</div><div class="title">時光唱盤</div></div></div><button class="retro-button" id="back-to-main-from-mode-btn">返回主選單</button>`;
         document.getElementById('song-selection-screen').innerHTML = `<h1 id="song-selection-title">選擇曲目</h1><div class="song-list" id="song-list"></div><button class="retro-button" id="back-to-mode-select-btn">返回模式選擇</button>`;
         document.getElementById('main-container').innerHTML = `<div id="timebeat-game-area" class="game-ui-container"><canvas id="timebeat-canvas"></canvas></div><div id="conductor-game-area" class="game-ui-container"><canvas id="conductor-canvas"></canvas></div><div class="game-stats"><div>得分: <span id="score">0</span></div><div>連擊: <span id="combo">0</span></div></div>`;
@@ -112,8 +107,9 @@
             updateTotalStarsUI() { document.getElementById('total-stars').textContent = this.getTotalStars(); },
             save() { try { localStorage.setItem('playerProgress', JSON.stringify(this.playerProgress)); } catch(e){} }
         };
+        
         const SongSelection = {
-             render() {
+            render() {
                 const gameType = Game.state.activeGame;
                 const songListContainer = document.getElementById('song-list');
                 songListContainer.innerHTML = '';
@@ -154,23 +150,24 @@
         };
 
         const TimeBeat = {
-            canvas: null, ctx: null, beatmap:[], notes: [],
+            canvas: null, ctx: null, beatmap:[], notes: [], nextNoteIndex: 0,
             init() { this.canvas = document.getElementById('timebeat-canvas'); if (this.canvas) this.ctx = this.canvas.getContext('2d'); },
             start() {
                 if(!this.canvas) this.init();
                 this.resizeCanvas();
                 this.canvas.addEventListener('pointerdown', this.handleTap.bind(this));
                 const song = SongData.timebeat[Game.state.currentSongId];
-                this.beatmap = [];
-                let trackCounter = 0;
-                const trackPattern = [0, 1, 2, 1];
-                song.notes.forEach(note => {
-                    const timeInMs = note.time;
-                    const track = trackPattern[trackCounter % trackPattern.length];
-                    this.beatmap.push([timeInMs, track]);
-                    trackCounter++;
-                });
+                this.notes = [];
+                this.nextNoteIndex = 0;
                 
+                let trackCounter = 0;
+                const trackPattern = [0, 1, 2, 1]; 
+                this.beatmap = song.notes.map(note => {
+                    const track = trackPattern[trackCounter % trackPattern.length];
+                    trackCounter++;
+                    return { ...note, track: track };
+                });
+
                 gameAudio.src = song.audioSrc;
                 setTimeout(() => {
                     Game.state.startTime = performance.now();
@@ -182,12 +179,85 @@
             gameLoop(currentTime) {
                 if (!Game.state.isPlaying) return;
                 const elapsedTime = currentTime - Game.state.startTime;
-                // ... (Game Loop Logic)
+                
+                while (this.nextNoteIndex < this.beatmap.length && this.beatmap[this.nextNoteIndex].time < elapsedTime + 2000) {
+                    const noteData = this.beatmap[this.nextNoteIndex];
+                    this.notes.push({ time: noteData.time, track: noteData.track, type: noteData.type, y: 0, active: true });
+                    this.nextNoteIndex++;
+                }
+
+                this.update(elapsedTime);
+                this.draw();
+                
+                const songDuration = SongData.timebeat[Game.state.currentSongId].duration;
+                if (elapsedTime >= songDuration) { Game.endGame(); return; }
+                
                 Game.state.animationFrameId = requestAnimationFrame(this.gameLoop.bind(this));
             },
-            update(elapsedTime) { /* ... */ },
-            draw() { /* ... */ },
-            handleTap(e) { /* ... */ },
+            update(elapsedTime) {
+                const hitLineY = this.canvas.height * 0.85;
+                this.notes.forEach(note => {
+                    if (note.active) {
+                        const timeDiff = note.time - elapsedTime;
+                        note.y = hitLineY - (timeDiff * 0.8); 
+                        if (timeDiff < -150) { 
+                            note.active = false;
+                            Game.state.hits.miss++;
+                            Game.state.combo = 0;
+                        }
+                    }
+                });
+                this.notes = this.notes.filter(note => note.active || note.y < this.canvas.height);
+                document.getElementById('combo').textContent = Game.state.combo;
+            },
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const numTracks = 3, trackWidth = this.canvas.width / numTracks, hitLineY = this.canvas.height * 0.85;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 2;
+                for (let i = 1; i < numTracks; i++) { ctx.beginPath(); ctx.moveTo(trackWidth * i, 0); ctx.lineTo(trackWidth * i, this.canvas.height); ctx.stroke(); }
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; ctx.fillRect(0, hitLineY - 25, this.canvas.width, 50);
+                this.notes.forEach(note => {
+                    if (note.active && note.y > -50) {
+                        const x = trackWidth * note.track + trackWidth / 2;
+                        const isStrong = note.type === 'strong';
+                        const radius = isStrong ? trackWidth * 0.45 : trackWidth * 0.35;
+                        this.ctx.beginPath();
+                        this.ctx.arc(x, note.y, radius, 0, Math.PI * 2);
+                        this.ctx.fillStyle = isStrong ? 'orangered' : 'cyan';
+                        this.ctx.shadowColor = isStrong ? 'orangered' : 'cyan';
+                        this.ctx.shadowBlur = 15;
+                        this.ctx.fill();
+                        this.ctx.shadowBlur = 0;
+                    }
+                });
+            },
+            handleTap(e) {
+                if (!Game.state.startTime) return;
+                const rect = this.canvas.getBoundingClientRect();
+                const touch = e.touches ? e.touches[0] : e;
+                const x = touch.clientX - rect.left;
+                const track = Math.floor(x / (this.canvas.width / 3));
+                const elapsedTime = performance.now() - Game.state.startTime;
+
+                for (let i = 0; i < this.notes.length; i++) {
+                    const note = this.notes[i];
+                    if (note.active && note.track === track) {
+                        const timeDiff = Math.abs(note.time - elapsedTime);
+                        if (timeDiff < 150) { 
+                            if (timeDiff < 70) { 
+                                Game.state.score += 100 + Game.state.combo * 5; Game.state.hits.perfect++;
+                            } else {
+                                Game.state.score += 50; Game.state.hits.good++;
+                            }
+                            Game.state.combo++; Game.state.maxCombo = Math.max(Game.state.maxCombo, Game.state.combo);
+                            note.active = false;
+                            document.getElementById('score').textContent = Game.state.score;
+                            document.getElementById('combo').textContent = Game.state.combo;
+                            break;
+                        }
+                    }
+                }
+            },
             resizeCanvas() { if(this.canvas){this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight;} }
         };
         
@@ -240,10 +310,13 @@
                 if(song.beatmapSrc && !song.notes) {
                     try {
                         const response = await fetch(song.beatmapSrc);
+                        if (!response.ok) throw new Error('Network response was not ok');
                         const beatmapData = await response.json();
-                        song.notes = beatmapData.filter(e=>e.type === 'tap').map(e=>({time: e.time * 1000, type: 'tap'}));
+                        song.notes = beatmapData.filter(e=>e.type === 'tap' || e.type === 'strong').map(e=>({time: e.time * 1000, type: e.type}));
                     } catch (e) {
-                        alert('譜面載入失敗！'); return;
+                        alert('譜面載入失敗！請檢查 beatmaps 資料夾和檔案。');
+                        console.error("譜面載入錯誤:", e);
+                        return;
                     }
                 }
                 
@@ -263,6 +336,8 @@
                 if (!this.state.isPlaying) return;
                 this.state.isPlaying = false;
                 if(this.state.animationFrameId) { cancelAnimationFrame(this.state.animationFrameId); this.state.animationFrameId = null; }
+                gameAudio.pause();
+                
                 const song = SongData[this.state.activeGame]?.[this.state.currentSongId];
                 if (!song) { this.showScreen('mode-selection-screen'); return; }
                 const totalNotes = song.notes?.length || 1;
@@ -276,6 +351,7 @@
                 const coinsEarned = stars * 10 + Math.floor(this.state.score / 1000);
                 Leaderboard.updateSongProgress(this.state.currentSongId, this.state.score, stars);
                 Wallet.addCoins(coinsEarned);
+                
                 document.getElementById('end-title').textContent = song.title;
                 document.getElementById('final-score').textContent = this.state.score;
                 document.getElementById('max-combo').textContent = this.state.maxCombo;
